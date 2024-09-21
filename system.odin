@@ -2,8 +2,9 @@ package ecs
 
 import rl "vendor:raylib"
 
-System :: proc(g: ^World) // TODO add delta
+// TODO add delta
+//System :: proc(g: ^World)
 
-register_systems :: proc(w: ^World, systems: ..System) {
+register_systems :: proc(w: ^World($C), systems: ..proc(g: ^World(C))) {
 	append(&w.systems, ..systems)
 }

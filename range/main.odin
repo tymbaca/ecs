@@ -4,6 +4,7 @@ import ".."
 import "core:fmt"
 
 main :: proc() {
+	/*
 	w := ecs.new_world()
 	w.components = ecs.ComponentStorage {
 		ecs.PlayerControl = {7 = ecs.PlayerControl{}, 6 = ecs.Movement{}},
@@ -17,6 +18,5 @@ main :: proc() {
 
 	pc2 := ecs.get_component(w, 6, ecs.PlayerControl)
 	ecs.log(pc2)
-	/*
     */
 }

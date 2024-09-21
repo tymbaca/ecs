@@ -4,11 +4,11 @@ import ".."
 import "core:fmt"
 import rl "vendor:raylib"
 
-player_movement_system :: proc(w: ^ecs.World) {
+player_movement_system :: proc(w: ^World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.PlayerControl, ecs.Movement, ecs.Transform) {
-			transform := ecs.get_component(w^, e.id, ecs.Transform)
-			movement := ecs.get_component(w^, e.id, ecs.Movement)
+		if ecs.has_components(e, PlayerControl, Movement, Transform) {
+			transform := ecs.get_component(w^, e.id, Transform)
+			movement := ecs.get_component(w^, e.id, Movement)
 
 			if rl.IsKeyDown(.W) {
 				transform.pos.y -= movement.speed

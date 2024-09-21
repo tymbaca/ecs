@@ -5,6 +5,8 @@ Entity :: struct {
 	components: ComponentSet,
 }
 
+ComponentSet :: map[typeid]struct {}
+
 new_entity :: proc(id := 7) -> Entity {
 	e := Entity {
 		id         = id,
@@ -13,8 +15,6 @@ new_entity :: proc(id := 7) -> Entity {
 
 	return e
 }
-
-ComponentSet :: map[typeid]struct {}
 
 has_components :: proc(e: Entity, types: ..typeid) -> bool {
 	for t in types {
