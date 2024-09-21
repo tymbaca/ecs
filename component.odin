@@ -21,6 +21,22 @@ set_component :: proc(world: ^World($Component), entity: ^Entity, component: $T)
 	entity.components[component_type] = {}
 }
 
+must_get_component :: proc(
+	w: World($Component),
+	id: int,
+	$T: typeid,
+	loc := #caller_location,
+) -> T {
+	comp, ok := get_component(w, id, T)
+	if !ok {
+		log("MUST PANIC")
+		panic(fmt.aprintf("can't get component, caller: %v", loc))
+	}
+	log(comp, ok)
+
+	return comp
+}
+
 get_component :: proc(w: World($Component), id: int, $T: typeid) -> (T, bool) #optional_ok {
 	component_map, ok := w.components[T]
 	if !ok {

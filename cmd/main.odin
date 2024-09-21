@@ -9,13 +9,15 @@ World :: ecs.World(Component)
 WORLD: World = ecs.new_world(Component)
 
 init :: proc() {
-	ecs.register_systems(&WORLD, player_movement_system)
 	e := ecs.new_entity()
 	ecs.set_component(&WORLD, &e, PlayerControl{})
-	ecs.set_component(&WORLD, &e, Movement{speed = 5})
+	ecs.set_component(&WORLD, &e, Movement{speed = 1})
 	ecs.set_component(&WORLD, &e, Transform{})
+	ecs.set_component(&WORLD, &e, Box{size = {40, 50}, color = rl.RED})
 
 	append(&WORLD.entities, e)
+
+	ecs.register_systems(&WORLD, player_movement_system, draw_box_system)
 }
 
 main :: proc() {
