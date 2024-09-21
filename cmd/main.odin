@@ -16,10 +16,10 @@ init :: proc() {
 
 	e := ecs.create_entity(
 		&WORLD,
-		ecs.PlayerControl{},
-		ecs.Movement{speed = 5},
+		ecs.Player_Control{},
+		ecs.Movement{speed = 0.5},
 		ecs.Transform{},
-		ecs.Sprite{texture = mario_png},
+		ecs.Sprite{texture = mario_png, scale = 0.1},
 	)
 }
 
@@ -28,7 +28,7 @@ main :: proc() {
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
-		rl.ClearBackground(rl.BLUE)
+		rl.ClearBackground(rl.GRAY)
 
 		ecs.log(WORLD)
 

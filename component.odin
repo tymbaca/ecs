@@ -66,29 +66,50 @@ must_get_component :: proc(w: World, id: int, $T: typeid, loc := #caller_locatio
 ComponentStorage :: map[typeid]map[int]Component
 
 Component :: union {
-	PlayerControl,
+	Player_Control,
 	Movement,
 	Health,
 	Platform,
 	Collider,
 	Gravity,
+	Physics,
+	Air_Resistance,
 	Transform,
 	Sprite,
 }
 
-PlayerControl :: struct {}
+Player_Control :: struct {}
+
 Movement :: struct {
 	speed: f32,
 }
+
 Health :: struct {}
+
 Platform :: struct {}
+
 Collider :: struct {}
-Gravity :: struct {}
+
+Gravity :: struct {
+	force: f32,
+}
+
+Physics :: struct {
+	vector:          rl.Vector2,
+	mass:            f32,
+	vertical_active: bool,
+}
+
+Air_Resistance :: struct {
+	force: f32,
+}
+
 Transform :: struct {
 	pos: rl.Vector2,
 }
 Sprite :: struct {
 	texture: rl.Texture,
+	scale:   f32,
 }
 Box :: struct {
 	size: rl.Vector2,
