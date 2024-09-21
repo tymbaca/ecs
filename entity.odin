@@ -14,18 +14,7 @@ ComponentSet :: map[typeid]struct {}
 
 // create_entity creates new entity with specified components, adds it to world and returns it
 create_entity :: proc(world: ^World($T), components: ..T) {
-	fmt.printf("%T, %v", components, components)
-	/*
-	e := new_entity()
-
-	for comp in components {
-		set_component(world, &e, comp)
-	}
-
-	append(&world.entities, e)
-    */
-
-	//return Entity{}
+	// nothing happens here
 }
 
 new_entity :: proc(id := 7) -> Entity {
