@@ -6,9 +6,9 @@ import rl "vendor:raylib"
 
 empty_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Sprite, ecs.Transform) {
+		if ecs.has_components(e, ecs.Transform) {
 			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
-			sprite := ecs.must_get_component(w^, e.id, ecs.Sprite)
+			_ = transform
 
 			// do something
 		}
@@ -58,13 +58,15 @@ draw_sprite_system :: proc(w: ^ecs.World) {
 	}
 }
 
-gravity_system :: proc(w: ^ecs.World) {
+apply_gravity_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
 		if ecs.has_components(e, ecs.Gravity, ecs.Physics) {
 			physics := ecs.must_get_component(w^, e.id, ecs.Physics)
 			gravity := ecs.must_get_component(w^, e.id, ecs.Gravity)
 
+			physics.vector.y += gravity.force
 
+			ecs.set_component(w, &e, physics)
 		}
 	}
 }
