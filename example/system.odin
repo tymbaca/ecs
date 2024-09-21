@@ -4,9 +4,9 @@ import ".."
 import "core:fmt"
 import rl "vendor:raylib"
 
-player_movement_system :: proc(w: ^World) {
+player_movement_system :: proc(w: ^ecs.World(Component)) {
 	for &e in w.entities {
-		if ecs.has_components(e, PlayerControl, Movement, Transform) {
+		if ecs.has_components(e, Player_Control, Movement, Transform) {
 			transform := ecs.must_get_component(w^, e.id, Transform)
 			movement := ecs.must_get_component(w^, e.id, Movement)
 
@@ -28,7 +28,7 @@ player_movement_system :: proc(w: ^World) {
 	}
 }
 
-draw_box_system :: proc(w: ^World) {
+draw_box_system :: proc(w: ^ecs.World(Component)) {
 	for &e in w.entities {
 		if ecs.has_components(e, Box, Transform) { 	// maybe make combined func? that will return all needed components in place
 			ecs.log("hello from draw box")

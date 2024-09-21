@@ -1,11 +1,29 @@
 package ecs
 
+// Entity represents the Entity :) It holds it's ID and flags of 
+// components that it has
 Entity :: struct {
 	id:         int,
 	components: ComponentSet,
 }
 
+// ComponentSet is a set of flags of component types that entity owns
 ComponentSet :: map[typeid]struct {}
+
+// create_entity creates new entity with specified components, adds it to world and returns it
+create_entity :: proc(world: ^World($T), components: ..T) -> Entity {
+	/*
+	e := new_entity()
+
+	for comp in components {
+		set_component(world, &e, comp)
+	}
+
+	append(&world.entities, e)
+    */
+
+	return Entity{}
+}
 
 new_entity :: proc(id := 7) -> Entity {
 	e := Entity {

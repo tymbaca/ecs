@@ -2,9 +2,10 @@ package main
 
 import rl "vendor:raylib"
 
+// This is user-created union type that holds all user-created components
+// It will be passed on creation of ecs.World (to ecs.new_world)
 Component :: union {
-	int,
-	PlayerControl,
+	Player_Control,
 	Movement,
 	Health,
 	Platform,
@@ -20,7 +21,7 @@ Box :: struct {
 	color: rl.Color,
 }
 
-PlayerControl :: struct {}
+Player_Control :: struct {}
 
 Movement :: struct {
 	speed: f32,
