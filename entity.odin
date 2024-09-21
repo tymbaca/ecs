@@ -16,7 +16,7 @@ new_entity :: proc(id := 7) -> Entity {
 
 ComponentSet :: map[typeid]struct {}
 
-entity_has_components :: proc(e: Entity, types: ..typeid) -> bool {
+has_components :: proc(e: Entity, types: ..typeid) -> bool {
 	for t in types {
 		if t not_in e.components {
 			return false

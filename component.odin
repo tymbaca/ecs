@@ -1,64 +1,55 @@
 package ecs
 
 import "core:fmt"
+import "core:reflect"
+import rl "vendor:raylib"
 
-ComponentStorage :: map[typeid]map[int]Component
+set_component :: proc(world: ^World, entity: ^Entity, component: $T) {
+	component_type := typeid_of(type_of(component))
 
-type_to_kind := map[typeid]ComponentKind {
-	PlayerControl = .PlayerControl,
-	Movement      = .Movement,
-	Health        = .Health,
-	Platform      = .Platform,
-	Collider      = .Collider,
-	Gravity       = .Gravity,
-	Transform     = .Transform,
-	Sprite        = .Sprite,
+	// Init comp_map of that type if it doesn't exist
+	if world.components[component_type] == nil {
+		world.components[component_type] = make(map[int]Component)
+	}
+
+	// Add component to storage
+	comp_map := world.components[component_type]
+	comp_map[entity.id] = component
+	world.components[component_type] = comp_map // in case of map evacuation
+
+	// Set component flag on entity
+	entity.components[component_type] = {}
 }
 
-kind_to_type := map[ComponentKind]typeid {
-	.PlayerControl = PlayerControl,
-	.Movement      = Movement,
-	.Health        = Health,
-	.Platform      = Platform,
-	.Collider      = Collider,
-	.Gravity       = Gravity,
-	.Transform     = Transform,
-	.Sprite        = Sprite,
-}
+get_component :: proc(w: World, id: int, $T: typeid) -> (T, bool) #optional_ok {
+	component_map, ok := w.components[T]
+	if !ok {
+		return T{}, false
+	}
 
-get_component :: proc(store: ComponentStorage, id: int, $T: typeid) -> (T, bool) #optional_ok {
-	component_map, ok := store[T]
-	assert(ok, fmt.aprintf("no component map of type %T", T{}))
-
+	// Get union component from map
 	component: Component
 	component, ok = component_map[id]
 	if !ok {
 		return T{}, false
 	}
 
+	// Convert component to concrete type
 	final_component: T
 	final_component, ok = component.(T)
-	assert(ok, fmt.aprintf("got incorrent component type in map of type %T", T{}))
+	assert(
+		ok,
+		fmt.aprintf(
+			"got incorrent component type (%v) in map of type %T",
+			reflect.union_variant_typeid(component),
+			T{},
+		),
+	)
 
 	return final_component, true
 }
 
-add_component :: proc(w: World, e: Entity, c: $T) {
-	fmt.println(typeid_of(type_of(c)))
-	m := w.components[typeid_of(type_of(c))]
-	m[e.id] = c
-}
-
-ComponentKind :: enum {
-	PlayerControl,
-	Movement,
-	Health,
-	Platform,
-	Collider,
-	Gravity,
-	Transform,
-	Sprite,
-}
+ComponentStorage :: map[typeid]map[int]Component
 
 Component :: union {
 	int,
@@ -72,13 +63,15 @@ Component :: union {
 	Sprite,
 }
 
-PlayerControl :: struct {
-	speed: int,
+PlayerControl :: struct {}
+Movement :: struct {
+	speed: f32,
 }
-Movement :: struct {}
 Health :: struct {}
 Platform :: struct {}
 Collider :: struct {}
 Gravity :: struct {}
-Transform :: struct {}
+Transform :: struct {
+	pos: rl.Vector2,
+}
 Sprite :: struct {}

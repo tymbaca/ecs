@@ -1,10 +1,9 @@
 package ecs
 
-System :: proc(g: ^World)
+import rl "vendor:raylib"
 
-draw_sprite_system :: proc(w: ^World) {
-	query := bit_set[ComponentKind]{.Sprite}
+System :: proc(g: ^World) // TODO add delta
 
-	for e in w.entities {
-	}
+register_systems :: proc(w: ^World, systems: ..System) {
+	append(&w.systems, ..systems)
 }

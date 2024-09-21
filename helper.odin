@@ -2,8 +2,12 @@ package ecs
 
 import "core:fmt"
 
-LOG :: true
+LOG :: false
 
-log :: proc(args: ..any) {
-	when LOG do fmt.println(..args)
+log :: proc(args: ..any, loc := #caller_location) {
+	when LOG {
+		fmt.print(loc)
+		fmt.print(" ")
+		fmt.println(..args)
+	}
 }
