@@ -1,5 +1,7 @@
 package ecs
 
+import "core:fmt"
+
 // Entity represents the Entity :) It holds it's ID and flags of 
 // components that it has
 Entity :: struct {
@@ -11,7 +13,8 @@ Entity :: struct {
 ComponentSet :: map[typeid]struct {}
 
 // create_entity creates new entity with specified components, adds it to world and returns it
-create_entity :: proc(world: ^World($T), components: ..T) -> Entity {
+create_entity :: proc(world: ^World($T), components: ..T) {
+	fmt.printf("%T, %v", components, components)
 	/*
 	e := new_entity()
 
@@ -22,7 +25,7 @@ create_entity :: proc(world: ^World($T), components: ..T) -> Entity {
 	append(&world.entities, e)
     */
 
-	return Entity{}
+	//return Entity{}
 }
 
 new_entity :: proc(id := 7) -> Entity {
