@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:reflect"
 import rl "vendor:raylib"
 
+// set_component created of replaces (if it already exists) the component on the entity.
 set_component :: proc(world: ^World, entity: ^Entity, component: $T) {
 	component_type := typeid_of(type_of(component))
 
@@ -48,6 +49,19 @@ get_component :: proc(w: World, id: int, $T: typeid) -> (T, bool) #optional_ok {
 
 	return final_component, true
 }
+
+// must_get_component is the same as get_component but it panics if not found
+must_get_component :: proc(w: World, id: int, $T: typeid, loc := #caller_location) -> T {
+	comp, ok := get_component(w, id, T)
+	if !ok {
+		log("MUST PANIC")
+		panic(fmt.aprintf("can't get component, caller: %v", loc))
+	}
+	log(comp, ok)
+
+	return comp
+}
+
 
 ComponentStorage :: map[typeid]map[int]Component
 
