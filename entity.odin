@@ -5,7 +5,25 @@ Entity :: struct {
 	components: ComponentSet,
 }
 
-new_entity :: proc(id := 7) -> Entity {
+ComponentSet :: map[typeid]struct {}
+
+// create_entity creates new entity with specified components, adds it to world and returns it
+create_entity :: proc(world: ^World, components: ..Component) -> Entity {
+	e := new_entity()
+
+	for comp in components {
+		set_component(world, &e, comp)
+	}
+
+	append(&world.entities, e)
+
+	return e
+}
+
+new_entity :: proc() -> Entity {
+	@(static)id := 0
+	id += 1
+
 	e := Entity {
 		id         = id,
 		components = make(ComponentSet),
@@ -13,8 +31,6 @@ new_entity :: proc(id := 7) -> Entity {
 
 	return e
 }
-
-ComponentSet :: map[typeid]struct {}
 
 has_components :: proc(e: Entity, types: ..typeid) -> bool {
 	for t in types {

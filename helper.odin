@@ -2,7 +2,7 @@ package ecs
 
 import "core:fmt"
 
-LOG :: false
+LOG :: true
 
 log :: proc(args: ..any, loc := #caller_location) {
 	when LOG {

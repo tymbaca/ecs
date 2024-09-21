@@ -5,8 +5,8 @@ import "core:reflect"
 import rl "vendor:raylib"
 
 // set_component created of replaces (if it already exists) the component on the entity.
-set_component :: proc(world: ^World, entity: ^Entity, component: $T) {
-	component_type := typeid_of(type_of(component))
+set_component :: proc(world: ^World, entity: ^Entity, component: Component) {
+	component_type := reflect.union_variant_typeid(component)
 
 	// Init comp_map of that type if it doesn't exist
 	if world.components[component_type] == nil {
@@ -66,7 +66,6 @@ must_get_component :: proc(w: World, id: int, $T: typeid, loc := #caller_locatio
 ComponentStorage :: map[typeid]map[int]Component
 
 Component :: union {
-	int,
 	PlayerControl,
 	Movement,
 	Health,
@@ -88,4 +87,9 @@ Gravity :: struct {}
 Transform :: struct {
 	pos: rl.Vector2,
 }
-Sprite :: struct {}
+Sprite :: struct {
+	texture: rl.Texture,
+}
+Box :: struct {
+	size: rl.Vector2,
+}
