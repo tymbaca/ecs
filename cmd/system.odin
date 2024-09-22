@@ -2,6 +2,7 @@ package main
 
 import ".."
 import "core:fmt"
+import "core:time"
 import rl "vendor:raylib"
 
 empty_system :: proc(w: ^ecs.World) {
@@ -13,6 +14,20 @@ empty_system :: proc(w: ^ecs.World) {
 			// do something
 		}
 	}
+}
+
+stress_test_system :: proc(w: ^ecs.World) {
+	time.sleep(10 * time.Millisecond)
+}
+
+spawn_systems :: proc(system: ecs.System, count: int) -> []ecs.System {
+	systems := make([dynamic]ecs.System, count)
+
+	for i in 0 ..< count {
+		systems[i] = system
+	}
+
+	return systems[:]
 }
 
 player_movement_system :: proc(w: ^ecs.World) {

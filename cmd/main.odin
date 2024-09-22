@@ -8,18 +8,19 @@ WORLD := ecs.new_world()
 
 init :: proc() {
 	rl.InitWindow(800, 600, "smasher")
-	rl.SetTargetFPS(60)
+	//rl.SetTargetFPS(60)
 
 	mario_png := rl.LoadTexture("resources/mario.png")
 	mushroom_png := rl.LoadTexture("resources/mushroom.png")
 
 	ecs.register_systems(
 		&WORLD,
-		player_movement_system,
 		draw_sprite_system,
+		player_movement_system,
 		apply_physics_system,
 		apply_gravity_system,
 	)
+	ecs.register_parallel_systems(&WORLD, ..spawn_systems(stress_test_system, 10))
 
 	e := ecs.create_entity(
 		&WORLD,
@@ -37,20 +38,14 @@ main :: proc() {
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
-		rl.ClearBackground(rl.GRAY)
+		rl.ClearBackground(rl.BLACK)
 
 		ecs.log(WORLD)
 
-		update(&WORLD)
+		ecs.update(&WORLD)
 
 		rl.DrawFPS(0, 0)
 
 		rl.EndDrawing()
-	}
-}
-
-update :: proc(world: ^ecs.World) {
-	for system in world.systems {
-		system(world)
 	}
 }
