@@ -6,12 +6,10 @@ import rl "vendor:raylib"
 
 set_component :: proc {
 	set_component_union,
-//set_component_concrete,
 }
 
 // set_component created of replaces (if it already exists) the component on the entity.
 set_component_union :: proc(world: ^World, entity: ^Entity, component: Component) {
-	log("hello from union")
 	component_type := reflect.union_variant_typeid(component)
 
 	// Init comp_map of that type if it doesn't exist
@@ -27,26 +25,6 @@ set_component_union :: proc(world: ^World, entity: ^Entity, component: Component
 	// Set component flag on entity
 	entity.components[component_type] = {}
 }
-
-/* DOESN'T WORK
-set_component_concrete :: proc(world: ^World, entity: ^Entity, component: $T) {
-	log("hello from concrete")
-	component_type := typeid_of(type_of(component))
-
-	// Init comp_map of that type if it doesn't exist
-	if world.components[component_type] == nil {
-		world.components[component_type] = make(map[int]Component)
-	}
-
-	// Add component to storage
-	comp_map := world.components[component_type]
-	comp_map[entity.id] = component
-	world.components[component_type] = comp_map // in case of map evacuation
-
-	// Set component flag on entity
-	entity.components[component_type] = {}
-}
-*/
 
 get_component :: proc(w: World, id: int, $T: typeid) -> (T, bool) #optional_ok {
 	component_map, ok := w.components[T]
@@ -80,10 +58,8 @@ get_component :: proc(w: World, id: int, $T: typeid) -> (T, bool) #optional_ok {
 must_get_component :: proc(w: World, id: int, $T: typeid, loc := #caller_location) -> T {
 	comp, ok := get_component(w, id, T)
 	if !ok {
-		log("MUST PANIC")
 		panic(fmt.aprintf("can't get component, caller: %v", loc))
 	}
-	log(comp, ok)
 
 	return comp
 }
@@ -101,6 +77,7 @@ Component :: union {
 	Physics,
 	Air_Resistance,
 	Transform,
+	Limit_Transform,
 	Sprite,
 }
 
@@ -114,7 +91,11 @@ Health :: struct {}
 
 Platform :: struct {}
 
-Collider :: struct {}
+Collider :: struct {
+	offset: rl.Vector2,
+	pivot:  Pivot,
+	shape:  Shape,
+}
 
 Gravity :: struct {
 	force: f32,
@@ -133,10 +114,27 @@ Air_Resistance :: struct {
 Transform :: struct {
 	pos: rl.Vector2,
 }
+
+Limit_Transform :: struct {}
+
 Sprite :: struct {
 	texture: rl.Texture,
-	scale:   f32,
+	size:    rl.Vector2,
+	pivot:   Pivot,
+	offset:  rl.Vector2,
 }
+
 Box :: struct {
 	size: rl.Vector2,
+}
+
+Shape :: union {
+	Box,
+}
+
+// Where the Transform will be relative to object that has pivot setting
+Pivot :: enum {
+	Upper_Left,
+	Center,
+	Down,
 }

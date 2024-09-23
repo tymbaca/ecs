@@ -31,7 +31,6 @@ run_parallel_systems :: proc(world: ^World) {
 
 	wg := &sync.Wait_Group{}
 	sync.wait_group_add(wg, system_count)
-	log("added to wg", system_count)
 
 	// Adding tasks for every system
 	for &system, i in world.parallel_systems {
@@ -42,13 +41,10 @@ run_parallel_systems :: proc(world: ^World) {
 		}
 
 		thread.pool_add_task(world.pool, context.allocator, system_task_wrapper, &data[i])
-		log("added task", i)
 	}
 
-	log("waiting")
 	sync.wait(wg)
 	clear(&world.pool.tasks_done)
-	log("end")
 }
 
 System_Task_Data :: struct {
