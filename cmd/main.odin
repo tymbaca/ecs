@@ -27,6 +27,7 @@ init :: proc() {
 		// Logic
 		player_movement_system,
 		apply_gravity_system,
+		jump_system,
 		limit_transform_in_screen_system,
 	)
 	//ecs.register_parallel_systems(&WORLD, ..spawn_systems(stress_test_system, 10))
@@ -38,8 +39,9 @@ init :: proc() {
 		cmp.Transform{pos = {200, 200}},
 		cmp.Limit_Transform{},
 		cmp.Sprite{texture = mario_png, size = {100, 100}, pivot = .Down},
-		cmp.Simple_Gravity{force = 800},
+		cmp.Simple_Gravity{force = 1000},
 		cmp.Collider{shape = cmp.Box{size = {80, 100}}, pivot = .Down},
+		cmp.Jump{power = 2600, falloff = 2600},
 	)
 }
 

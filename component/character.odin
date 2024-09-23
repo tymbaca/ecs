@@ -11,5 +11,8 @@ Movement :: struct {
 }
 
 Jump :: struct {
-	power: f32,
+	power:            f32,
+	current_velocity: f32,
+	falloff:          f32,
+	busy:             bool,
 }

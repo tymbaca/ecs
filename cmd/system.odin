@@ -172,9 +172,40 @@ apply_gravity_system :: proc(w: ^ecs.World) {
 			gravity := ecs.must_get_component(w^, e.id, cmp.Simple_Gravity)
 
 			transform.pos.y += gravity.force * w.delta
-			fmt.println(transform, "delta:", w.delta)
 
 			ecs.set_component(w, &e, transform)
+		}
+	}
+}
+
+jump_system :: proc(w: ^ecs.World) {
+	for &e in w.entities {
+		if ecs.has_components(e, cmp.Simple_Gravity, cmp.Transform, cmp.Jump) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
+			jump := ecs.must_get_component(w^, e.id, cmp.Jump)
+			gravity := ecs.must_get_component(w^, e.id, cmp.Simple_Gravity)
+
+			fmt.println(jump)
+			fmt.println(w.delta)
+
+			if rl.IsKeyDown(.SPACE) && !jump.busy {
+				jump.busy = true
+				jump.current_velocity = jump.power
+				gravity.disabled = true
+			}
+
+			if jump.current_velocity <= 0 {
+				jump.busy = false // BUG, can do multiple jumps without landing
+				gravity.disabled = false
+			} else {
+				jump.current_velocity -= jump.falloff * w.delta
+				transform.pos.y -= jump.current_velocity * w.delta
+				fmt.println(jump.current_velocity * w.delta, transform.pos, gravity)
+			}
+
+			ecs.set_component(w, &e, transform)
+			ecs.set_component(w, &e, jump)
+			ecs.set_component(w, &e, gravity)
 		}
 	}
 }

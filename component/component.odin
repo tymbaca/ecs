@@ -14,4 +14,5 @@ Component :: union {
 	Transform,
 	Limit_Transform,
 	Sprite,
+	Jump,
 }

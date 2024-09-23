@@ -9,7 +9,8 @@ Transform :: struct {
 Limit_Transform :: struct {}
 
 Simple_Gravity :: struct {
-	force: f32,
+	force:    f32,
+	disabled: bool,
 }
 
 Physics :: struct {
