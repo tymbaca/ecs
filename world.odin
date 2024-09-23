@@ -1,5 +1,6 @@
 package ecs
 
+import "base:intrinsics"
 import "core:os"
 import "core:thread"
 
@@ -16,10 +17,10 @@ new_world :: proc($T: typeid) -> World(T) where intrinsics.type_is_union(T) {
 	thread.pool_init(pool, context.allocator, os.processor_core_count())
 	thread.pool_start(pool)
 
-	return World {
+	return World(T) {
 		entities = make([dynamic]Entity),
-		components = make(ComponentStorage),
-		systems = make([dynamic]System),
+		components = make(map[typeid]map[int]T),
+		systems = make([dynamic]proc(_: ^World(T))),
 		pool = pool,
 	}
 }

@@ -4,11 +4,6 @@ import "core:fmt"
 import "core:reflect"
 import rl "vendor:raylib"
 
-set_component :: proc {
-	set_component_union,
-//set_component_concrete,
-}
-
 // set_component created of replaces (if it already exists) the component on the entity.
 set_component :: proc(world: ^World($Component), entity: ^Entity, component: $T) {
 	log("hello from union")
