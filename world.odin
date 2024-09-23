@@ -2,6 +2,7 @@ package ecs
 
 import "core:os"
 import "core:thread"
+import "core:time"
 
 World :: struct {
 	entities:         [dynamic]Entity,
@@ -9,6 +10,10 @@ World :: struct {
 	systems:          [dynamic]System,
 	parallel_systems: [dynamic]System,
 	pool:             ^thread.Pool,
+	//
+	prev_frame_time:  Maybe(time.Time),
+	delta:            f32, // in secs
+	delta_dur:        time.Duration,
 }
 
 new_world :: proc() -> World {
@@ -25,6 +30,19 @@ new_world :: proc() -> World {
 }
 
 update :: proc(world: ^World) {
+	update_time(world)
+
 	run_systems(world)
 	run_parallel_systems(world)
+}
+
+update_time :: proc(world: ^World) {
+	if world.prev_frame_time == nil {
+		world.prev_frame_time = time.now()
+	}
+
+	delta_dur := time.since(world.prev_frame_time.(time.Time))
+	world.delta_dur = delta_dur
+	world.delta = f32(time.duration_seconds(delta_dur))
+	world.prev_frame_time = time.now()
 }

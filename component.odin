@@ -54,7 +54,7 @@ get_component :: proc(w: World, id: int, $T: typeid) -> (T, bool) #optional_ok {
 	return final_component, true
 }
 
-// must_get_component is the same as get_component but it panics if not found
+// `must_get_component` is the same as `get_component` but it panics if not found
 must_get_component :: proc(w: World, id: int, $T: typeid, loc := #caller_location) -> T {
 	comp, ok := get_component(w, id, T)
 	if !ok {
@@ -73,7 +73,7 @@ Component :: union {
 	Health,
 	Platform,
 	Collider,
-	Gravity,
+	Simple_Gravity,
 	Physics,
 	Air_Resistance,
 	Transform,
@@ -97,7 +97,7 @@ Collider :: struct {
 	shape:  Shape,
 }
 
-Gravity :: struct {
+Simple_Gravity :: struct {
 	force: f32,
 }
 

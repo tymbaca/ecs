@@ -32,30 +32,6 @@ spawn_systems :: proc(system: ecs.System, count: int) -> []ecs.System {
 	return systems[:]
 }
 
-player_movement_system :: proc(w: ^ecs.World) {
-	for &e in w.entities {
-		if ecs.has_components(e, ecs.Player_Control, ecs.Movement, ecs.Transform) {
-			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
-			movement := ecs.must_get_component(w^, e.id, ecs.Movement)
-
-			if rl.IsKeyDown(.W) {
-				transform.pos.y -= movement.speed
-			}
-			if rl.IsKeyDown(.S) {
-				transform.pos.y += movement.speed
-			}
-			if rl.IsKeyDown(.A) {
-				transform.pos.x -= movement.speed
-			}
-			if rl.IsKeyDown(.D) {
-				transform.pos.x += movement.speed
-			}
-
-			ecs.set_component(w, &e, transform)
-		}
-	}
-}
-
 draw_sprite_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
 		if ecs.has_components(e, ecs.Sprite, ecs.Transform) {
@@ -147,45 +123,61 @@ debug_transform :: proc(w: ^ecs.World) {
 	}
 }
 
-apply_gravity_system :: proc(w: ^ecs.World) {
-	for &e in w.entities {
-		if ecs.has_components(e, ecs.Gravity, ecs.Physics) {
-			physics := ecs.must_get_component(w^, e.id, ecs.Physics)
-			gravity := ecs.must_get_component(w^, e.id, ecs.Gravity)
-
-			physics.vector.y += gravity.force
-
-			ecs.set_component(w, &e, physics)
-		}
-	}
-}
-
 draw_physics_vector_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Gravity, ecs.Physics) {
+		if ecs.has_components(e, ecs.Simple_Gravity, ecs.Physics) {
 			physics := ecs.must_get_component(w^, e.id, ecs.Physics)
-			gravity := ecs.must_get_component(w^, e.id, ecs.Gravity)
+			gravity := ecs.must_get_component(w^, e.id, ecs.Simple_Gravity)
 
-
+			// TODO
 		}
 	}
 }
 
-
-apply_physics_system :: proc(w: ^ecs.World) {
+player_movement_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Gravity, ecs.Physics) {
-			physics := ecs.must_get_component(w^, e.id, ecs.Physics)
+		if ecs.has_components(e, ecs.Player_Control, ecs.Movement, ecs.Transform) {
 			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
+			movement := ecs.must_get_component(w^, e.id, ecs.Movement)
 
-			if !physics.vertical_active do transform.pos.y = 0
+			diff: rl.Vector2
 
-			transform.pos += physics.vector
+			/*
+			if rl.IsKeyDown(.W) {
+				diff.y -= movement.speed
+			}
+			if rl.IsKeyDown(.S) {
+				diff.y += movement.speed
+			}
+            */
+			if rl.IsKeyDown(.A) {
+				diff.x -= movement.speed
+			}
+			if rl.IsKeyDown(.D) {
+				diff.x += movement.speed
+			}
+
+			transform.pos += diff * w.delta
 
 			ecs.set_component(w, &e, transform)
 		}
 	}
 }
+
+apply_gravity_system :: proc(w: ^ecs.World) {
+	for &e in w.entities {
+		if ecs.has_components(e, ecs.Simple_Gravity, ecs.Transform) {
+			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
+			gravity := ecs.must_get_component(w^, e.id, ecs.Simple_Gravity)
+
+			transform.pos.y += gravity.force * w.delta
+			fmt.println(transform, "delta:", w.delta)
+
+			ecs.set_component(w, &e, transform)
+		}
+	}
+}
+
 
 limit_transform_in_screen_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {

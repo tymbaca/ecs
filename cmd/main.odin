@@ -25,21 +25,19 @@ init :: proc() {
 		// 
 		// Logic
 		player_movement_system,
-		apply_physics_system,
+		apply_gravity_system,
 		limit_transform_in_screen_system,
-		//apply_gravity_system,
 	)
 	//ecs.register_parallel_systems(&WORLD, ..spawn_systems(stress_test_system, 10))
 
 	e := ecs.create_entity(
 		&WORLD,
 		ecs.Player_Control{},
-		ecs.Movement{speed = 10},
+		ecs.Movement{speed = 1000},
 		ecs.Transform{pos = {200, 200}},
 		ecs.Limit_Transform{},
 		ecs.Sprite{texture = mario_png, size = {100, 100}, pivot = .Down},
-		ecs.Gravity{force = 0.98},
-		ecs.Physics{vertical_active = true},
+		ecs.Simple_Gravity{force = 800},
 		ecs.Collider{shape = ecs.Box{size = {80, 100}}, pivot = .Down},
 	)
 }
