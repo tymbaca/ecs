@@ -1,6 +1,7 @@
 package main
 
 import ".."
+import cmp "../component"
 import "core:fmt"
 import "core:time"
 import rl "vendor:raylib"
@@ -9,8 +10,8 @@ DEBUG :: true
 
 empty_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Transform) {
-			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
+		if ecs.has_components(e, cmp.Transform) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
 			_ = transform
 
 			// do something
@@ -34,9 +35,9 @@ spawn_systems :: proc(system: ecs.System, count: int) -> []ecs.System {
 
 draw_sprite_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Sprite, ecs.Transform) {
-			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
-			sprite := ecs.must_get_component(w^, e.id, ecs.Sprite)
+		if ecs.has_components(e, cmp.Sprite, cmp.Transform) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
+			sprite := ecs.must_get_component(w^, e.id, cmp.Sprite)
 
 			origin := origin_by_pivot(transform.pos + sprite.offset, sprite.size, sprite.pivot)
 
@@ -72,12 +73,12 @@ COLLIDER_DEBUG_COLOR :: rl.Color{0, 121, 241, 100}
 debug_collider_shapes :: proc(w: ^ecs.World) {
 	when !DEBUG do return
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Transform, ecs.Collider) {
-			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
-			collider := ecs.must_get_component(w^, e.id, ecs.Collider)
+		if ecs.has_components(e, cmp.Transform, cmp.Collider) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
+			collider := ecs.must_get_component(w^, e.id, cmp.Collider)
 
 			switch shape in collider.shape {
-			case ecs.Box:
+			case cmp.Box:
 				origin := transform.pos + collider.offset
 				origin = origin_by_pivot(origin, shape.size, collider.pivot)
 				rl.DrawRectangle(
@@ -92,7 +93,7 @@ debug_collider_shapes :: proc(w: ^ecs.World) {
 	}
 }
 
-origin_by_pivot :: proc(origin, size: rl.Vector2, pivot: ecs.Pivot) -> rl.Vector2 {
+origin_by_pivot :: proc(origin, size: rl.Vector2, pivot: cmp.Pivot) -> rl.Vector2 {
 	origin := origin
 
 	switch pivot {
@@ -114,8 +115,8 @@ TRANSFORM_COLOR :: rl.Color{241, 120, 60, 170}
 debug_transform :: proc(w: ^ecs.World) {
 	when !DEBUG do return
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Transform) {
-			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
+		if ecs.has_components(e, cmp.Transform) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
 
 			ecs.log("debug transform", transform)
 			rl.DrawCircleV(transform.pos, 6, TRANSFORM_COLOR)
@@ -125,9 +126,9 @@ debug_transform :: proc(w: ^ecs.World) {
 
 draw_physics_vector_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Simple_Gravity, ecs.Physics) {
-			physics := ecs.must_get_component(w^, e.id, ecs.Physics)
-			gravity := ecs.must_get_component(w^, e.id, ecs.Simple_Gravity)
+		if ecs.has_components(e, cmp.Simple_Gravity, cmp.Physics) {
+			physics := ecs.must_get_component(w^, e.id, cmp.Physics)
+			gravity := ecs.must_get_component(w^, e.id, cmp.Simple_Gravity)
 
 			// TODO
 		}
@@ -136,9 +137,9 @@ draw_physics_vector_system :: proc(w: ^ecs.World) {
 
 player_movement_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Player_Control, ecs.Movement, ecs.Transform) {
-			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
-			movement := ecs.must_get_component(w^, e.id, ecs.Movement)
+		if ecs.has_components(e, cmp.Player_Control, cmp.Movement, cmp.Transform) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
+			movement := ecs.must_get_component(w^, e.id, cmp.Movement)
 
 			diff: rl.Vector2
 
@@ -166,9 +167,9 @@ player_movement_system :: proc(w: ^ecs.World) {
 
 apply_gravity_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Simple_Gravity, ecs.Transform) {
-			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
-			gravity := ecs.must_get_component(w^, e.id, ecs.Simple_Gravity)
+		if ecs.has_components(e, cmp.Simple_Gravity, cmp.Transform) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
+			gravity := ecs.must_get_component(w^, e.id, cmp.Simple_Gravity)
 
 			transform.pos.y += gravity.force * w.delta
 			fmt.println(transform, "delta:", w.delta)
@@ -181,8 +182,8 @@ apply_gravity_system :: proc(w: ^ecs.World) {
 
 limit_transform_in_screen_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
-		if ecs.has_components(e, ecs.Transform, ecs.Limit_Transform) {
-			transform := ecs.must_get_component(w^, e.id, ecs.Transform)
+		if ecs.has_components(e, cmp.Transform, cmp.Limit_Transform) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
 
 			transform.pos.x = rl.Clamp(transform.pos.x, 0, f32(SCREEN.x))
 			transform.pos.y = rl.Clamp(transform.pos.y, 0, f32(SCREEN.y))

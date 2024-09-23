@@ -1,5 +1,7 @@
 package ecs
 
+import cmp "component"
+
 Entity :: struct {
 	id:         int,
 	components: ComponentSet,
@@ -8,7 +10,7 @@ Entity :: struct {
 ComponentSet :: map[typeid]struct {}
 
 // create_entity creates new entity with specified components, adds it to world and returns it
-create_entity :: proc(world: ^World, components: ..Component) -> Entity {
+create_entity :: proc(world: ^World, components: ..cmp.Component) -> Entity {
 	e := new_entity()
 
 	for comp in components {

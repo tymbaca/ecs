@@ -1,6 +1,7 @@
 package main
 
 import ".."
+import cmp "../component"
 import "core:fmt"
 import rl "vendor:raylib"
 
@@ -32,13 +33,13 @@ init :: proc() {
 
 	e := ecs.create_entity(
 		&WORLD,
-		ecs.Player_Control{},
-		ecs.Movement{speed = 1000},
-		ecs.Transform{pos = {200, 200}},
-		ecs.Limit_Transform{},
-		ecs.Sprite{texture = mario_png, size = {100, 100}, pivot = .Down},
-		ecs.Simple_Gravity{force = 800},
-		ecs.Collider{shape = ecs.Box{size = {80, 100}}, pivot = .Down},
+		cmp.Player_Control{},
+		cmp.Movement{speed = 1000},
+		cmp.Transform{pos = {200, 200}},
+		cmp.Limit_Transform{},
+		cmp.Sprite{texture = mario_png, size = {100, 100}, pivot = .Down},
+		cmp.Simple_Gravity{force = 800},
+		cmp.Collider{shape = cmp.Box{size = {80, 100}}, pivot = .Down},
 	)
 }
 

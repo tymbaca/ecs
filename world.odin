@@ -1,12 +1,13 @@
 package ecs
 
+import cmp "component"
 import "core:os"
 import "core:thread"
 import "core:time"
 
 World :: struct {
 	entities:         [dynamic]Entity,
-	components:       ComponentStorage,
+	components:       cmp.ComponentStorage,
 	systems:          [dynamic]System,
 	parallel_systems: [dynamic]System,
 	pool:             ^thread.Pool,
@@ -23,7 +24,7 @@ new_world :: proc() -> World {
 
 	return World {
 		entities = make([dynamic]Entity),
-		components = make(ComponentStorage),
+		components = make(cmp.ComponentStorage),
 		systems = make([dynamic]System),
 		pool = pool,
 	}
