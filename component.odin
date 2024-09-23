@@ -4,8 +4,14 @@ import "core:fmt"
 import "core:reflect"
 import rl "vendor:raylib"
 
+set_component :: proc {
+	set_component_union,
+//set_component_concrete,
+}
+
 // set_component created of replaces (if it already exists) the component on the entity.
 set_component :: proc(world: ^World($Component), entity: ^Entity, component: $T) {
+	log("hello from union")
 	component_type := reflect.union_variant_typeid(component)
 
 	// Init comp_map of that type if it doesn't exist
@@ -21,6 +27,26 @@ set_component :: proc(world: ^World($Component), entity: ^Entity, component: $T)
 	// Set component flag on entity
 	entity.components[component_type] = {}
 }
+
+/* DOESN'T WORK
+set_component_concrete :: proc(world: ^World, entity: ^Entity, component: $T) {
+	log("hello from concrete")
+	component_type := typeid_of(type_of(component))
+
+	// Init comp_map of that type if it doesn't exist
+	if world.components[component_type] == nil {
+		world.components[component_type] = make(map[int]Component)
+	}
+
+	// Add component to storage
+	comp_map := world.components[component_type]
+	comp_map[entity.id] = component
+	world.components[component_type] = comp_map // in case of map evacuation
+
+	// Set component flag on entity
+	entity.components[component_type] = {}
+}
+*/
 
 // must_get_component is the same as get_component but it panics if not found
 must_get_component :: proc(
