@@ -6,7 +6,7 @@ import rl "vendor:raylib"
 
 // set_component created of replaces (if it already exists) the component on the entity.
 set_component :: proc(world: ^World($Component), entity: ^Entity, component: $T) {
-	component_type := typeid_of(type_of(component))
+	component_type := reflect.union_variant_typeid(component)
 
 	// Init comp_map of that type if it doesn't exist
 	if world.components[component_type] == nil {
