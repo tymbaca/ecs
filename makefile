@@ -1,5 +1,5 @@
 run:
-	odin run ./example -out:app
+	odin run ./cmd -out:app
 
 rng:
 	odin run ./range -out:app
