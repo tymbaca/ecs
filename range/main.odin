@@ -6,6 +6,27 @@ import "core:fmt"
 import "core:os"
 
 main :: proc() {
+	s: [dynamic]int
+
+	append(&s, 10)
+	fmt.println(s)
+	/*
+	m: map[string]int
+
+	clear(&m)
+
+	v := m["hello"]
+	fmt.println(v)
+
+	m["hello"] = 11
+	v = m["hello"]
+	fmt.println(v)
+
+	clear(&m)
+
+	v = m["hello"]
+	fmt.println(v)
+    */
 	/*
 	w := ecs.new_world()
 	w.components = ecs.ComponentStorage {

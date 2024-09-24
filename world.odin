@@ -4,9 +4,10 @@ import cmp "component"
 import "core:os"
 import "core:thread"
 import "core:time"
+import "entity"
 
 World :: struct {
-	entities:         [dynamic]Entity,
+	entities:         [dynamic]entity.Entity,
 	components:       cmp.ComponentStorage,
 	systems:          [dynamic]System,
 	parallel_systems: [dynamic]System,
@@ -23,7 +24,7 @@ new_world :: proc() -> World {
 	thread.pool_start(pool)
 
 	return World {
-		entities = make([dynamic]Entity),
+		entities = make([dynamic]entity.Entity),
 		components = make(cmp.ComponentStorage),
 		systems = make([dynamic]System),
 		pool = pool,

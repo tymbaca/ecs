@@ -11,7 +11,7 @@ SCREEN: [2]i32 : {800, 600}
 
 init :: proc() {
 	rl.InitWindow(SCREEN.x, SCREEN.y, "smasher")
-	rl.SetTargetFPS(60)
+	//rl.SetTargetFPS(60)
 
 	mario_png := rl.LoadTexture("resources/mario.png")
 	mushroom_png := rl.LoadTexture("resources/mushroom.png")
@@ -21,8 +21,12 @@ init :: proc() {
 		// 
 		// Draw
 		draw_sprite_system,
+		// Debug draw
 		debug_collider_shapes,
 		debug_transform,
+	)
+	ecs.register_parallel_systems(
+		&WORLD,
 		// 
 		// Logic
 		player_movement_system,
@@ -30,7 +34,6 @@ init :: proc() {
 		jump_system,
 		limit_transform_in_screen_system,
 	)
-	//ecs.register_parallel_systems(&WORLD, ..spawn_systems(stress_test_system, 10))
 
 	e := ecs.create_entity(
 		&WORLD,
@@ -53,11 +56,9 @@ main :: proc() {
 		rl.ClearBackground(rl.BLACK)
 
 		ecs.log(WORLD)
-
 		ecs.update(&WORLD)
 
-		rl.DrawFPS(0, 0)
-
+		//rl.DrawFPS(0, 0)
 		rl.EndDrawing()
 	}
 }

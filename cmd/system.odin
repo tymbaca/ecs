@@ -79,13 +79,8 @@ debug_collider_shapes :: proc(w: ^ecs.World) {
 
 			switch shape in collider.shape {
 			case cmp.Box:
-				origin := transform.pos + collider.offset
-				origin = origin_by_pivot(origin, shape.size, collider.pivot)
-				rl.DrawRectangle(
-					i32(origin.x),
-					i32(origin.y),
-					i32(shape.size.x),
-					i32(shape.size.y),
+				rl.DrawRectangleRec(
+					rect_by_pivot(transform.pos + collider.offset, shape.size, collider.pivot),
 					COLLIDER_DEBUG_COLOR,
 				)
 			}
@@ -108,6 +103,11 @@ origin_by_pivot :: proc(origin, size: rl.Vector2, pivot: cmp.Pivot) -> rl.Vector
 	}
 
 	return origin
+}
+
+rect_by_pivot :: proc(origin, size: rl.Vector2, pivot: cmp.Pivot) -> rl.Rectangle {
+	newOrigin := origin_by_pivot(origin, size, pivot)
+	return {newOrigin.x, newOrigin.y, size.x, size.y}
 }
 
 TRANSFORM_COLOR :: rl.Color{241, 120, 60, 170}
@@ -184,11 +184,9 @@ jump_system :: proc(w: ^ecs.World) {
 			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
 			jump := ecs.must_get_component(w^, e.id, cmp.Jump)
 			gravity := ecs.must_get_component(w^, e.id, cmp.Simple_Gravity)
+			collider := ecs.must_get_component(w^, e.id, cmp.Collider)
 
-			fmt.println(jump)
-			fmt.println(w.delta)
-
-			if rl.IsKeyDown(.SPACE) && !jump.busy {
+			if rl.IsKeyDown(.SPACE) && !jump.busy && colliding_bottom(collider) {
 				jump.busy = true
 				jump.current_velocity = jump.power
 				gravity.disabled = true
@@ -200,7 +198,6 @@ jump_system :: proc(w: ^ecs.World) {
 			} else {
 				jump.current_velocity -= jump.falloff * w.delta
 				transform.pos.y -= jump.current_velocity * w.delta
-				fmt.println(jump.current_velocity * w.delta, transform.pos, gravity)
 			}
 
 			ecs.set_component(w, &e, transform)
@@ -215,6 +212,20 @@ limit_transform_in_screen_system :: proc(w: ^ecs.World) {
 	for &e in w.entities {
 		if ecs.has_components(e, cmp.Transform, cmp.Limit_Transform) {
 			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
+
+			transform.pos.x = rl.Clamp(transform.pos.x, 0, f32(SCREEN.x))
+			transform.pos.y = rl.Clamp(transform.pos.y, 0, f32(SCREEN.y))
+
+			ecs.set_component(w, &e, transform)
+		}
+	}
+}
+
+collision_system :: proc(w: ^ecs.World) {
+	for &e in w.entities {
+		if ecs.has_components(e, cmp.Transform, cmp.Limit_Transform) {
+			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
+
 
 			transform.pos.x = rl.Clamp(transform.pos.x, 0, f32(SCREEN.x))
 			transform.pos.y = rl.Clamp(transform.pos.y, 0, f32(SCREEN.y))

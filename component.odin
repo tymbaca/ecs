@@ -3,9 +3,10 @@ package ecs
 import cmp "component"
 import "core:fmt"
 import "core:reflect"
+import "entity"
 
 // set_component created of replaces (if it already exists) the component on the entity.
-set_component :: proc(world: ^World, entity: ^Entity, component: cmp.Component) {
+set_component :: proc(world: ^World, entity: ^entity.Entity, component: cmp.Component) {
 	component_type := reflect.union_variant_typeid(component)
 
 	// Init comp_map of that type if it doesn't exist

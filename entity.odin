@@ -1,16 +1,10 @@
 package ecs
 
 import cmp "component"
-
-Entity :: struct {
-	id:         int,
-	components: ComponentSet,
-}
-
-ComponentSet :: map[typeid]struct {}
+import "entity"
 
 // create_entity creates new entity with specified components, adds it to world and returns it
-create_entity :: proc(world: ^World, components: ..cmp.Component) -> Entity {
+create_entity :: proc(world: ^World, components: ..cmp.Component) -> entity.Entity {
 	e := new_entity()
 
 	for comp in components {
@@ -22,19 +16,19 @@ create_entity :: proc(world: ^World, components: ..cmp.Component) -> Entity {
 	return e
 }
 
-new_entity :: proc() -> Entity {
+new_entity :: proc() -> entity.Entity {
 	@(static)id := 0
 	id += 1
 
-	e := Entity {
+	e := entity.Entity {
 		id         = id,
-		components = make(ComponentSet),
+		components = make(entity.ComponentSet),
 	}
 
 	return e
 }
 
-has_components :: proc(e: Entity, types: ..typeid) -> bool {
+has_components :: proc(e: entity.Entity, types: ..typeid) -> bool {
 	for t in types {
 		if t not_in e.components {
 			return false
