@@ -5,7 +5,7 @@ import "core:reflect"
 import rl "vendor:raylib"
 
 // set_component created of replaces (if it already exists) the component on the entity.
-set_component :: proc(world: ^World($Component), entity: ^Entity, component: $T) {
+set_component :: proc(world: ^World($Component), entity: ^Entity, component: Component) {
 	log("hello from union")
 	component_type := reflect.union_variant_typeid(component)
 

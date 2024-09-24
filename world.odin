@@ -7,8 +7,8 @@ import "core:thread"
 World :: struct($T: typeid) {
 	entities:         [dynamic]Entity,
 	components:       map[typeid]map[int]T,
-	systems:          [dynamic]proc(w: ^World(T)),
-	parallel_systems: [dynamic]proc(w: ^World(T)),
+	systems:          [dynamic]proc(world: ^World(T)),
+	parallel_systems: [dynamic]Parallel_System,
 	pool:             ^thread.Pool,
 }
 
