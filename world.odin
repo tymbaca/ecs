@@ -3,6 +3,7 @@ package ecs
 import "base:intrinsics"
 import "core:os"
 import "core:thread"
+import "core:time"
 
 World :: struct($T: typeid) {
 	entities:         [dynamic]Entity,
@@ -10,6 +11,10 @@ World :: struct($T: typeid) {
 	systems:          [dynamic]proc(world: ^World(T)),
 	parallel_systems: [dynamic]Parallel_System,
 	pool:             ^thread.Pool,
+	//
+	prev_frame_time:  Maybe(time.Time),
+	delta:            f32, // in secs
+	delta_dur:        time.Duration,
 }
 
 new_world :: proc($T: typeid) -> World(T) where intrinsics.type_is_union(T) {
@@ -26,6 +31,19 @@ new_world :: proc($T: typeid) -> World(T) where intrinsics.type_is_union(T) {
 }
 
 update :: proc(world: ^World($T)) {
+	update_time(world)
+
 	run_systems(world)
 	run_parallel_systems(world)
+}
+
+update_time :: proc(world: ^World($T)) {
+	if world.prev_frame_time == nil {
+		world.prev_frame_time = time.now()
+	}
+
+	delta_dur := time.since(world.prev_frame_time.(time.Time))
+	world.delta_dur = delta_dur
+	world.delta = f32(time.duration_seconds(delta_dur))
+	world.prev_frame_time = time.now()
 }

@@ -25,16 +25,22 @@ init :: proc() {
 		// Debug draw
 		debug_collider_shapes,
 		debug_transform,
-	)
-	ecs.register_parallel_systems(
-		&WORLD,
-		// 
-		// Logic
 		player_movement_system,
 		apply_gravity_system,
 		jump_system,
 		limit_transform_in_screen_system,
 	)
+	/*
+	ecs.register_parallel_systems(
+		&WORLD,
+		// 
+		// Logic
+		ecs.to_parallel_system(player_movement_system),
+		ecs.to_parallel_system(apply_gravity_system),
+		ecs.to_parallel_system(jump_system),
+		ecs.to_parallel_system(limit_transform_in_screen_system),
+	)
+    */
 
 	e := ecs.create_entity(
 		&WORLD,

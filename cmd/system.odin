@@ -23,6 +23,7 @@ stress_test_system :: proc(w: ^World) {
 	time.sleep(10 * time.Millisecond)
 }
 
+/*
 spawn_systems :: proc(system: ecs.System, count: int) -> []ecs.System {
 	systems := make([dynamic]ecs.System, count)
 
@@ -32,6 +33,7 @@ spawn_systems :: proc(system: ecs.System, count: int) -> []ecs.System {
 
 	return systems[:]
 }
+*/
 
 draw_sprite_system :: proc(w: ^World) {
 	for &e in w.entities {
