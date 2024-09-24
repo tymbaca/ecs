@@ -1,12 +1,14 @@
-package main
+package system
 
-import ".."
-import cmp "component"
+import "../.."
+import cmp "../component"
 import "core:fmt"
 import "core:time"
 import rl "vendor:raylib"
 
 DEBUG :: true
+
+World :: ecs.World(cmp.Component)
 
 empty_system :: proc(w: ^World) {
 	for &e in w.entities {
@@ -214,9 +216,10 @@ limit_transform_in_screen_system :: proc(w: ^World) {
 	for &e in w.entities {
 		if ecs.has_components(e, cmp.Transform, cmp.Limit_Transform) {
 			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
+			limit := ecs.must_get_component(w^, e.id, cmp.Limit_Transform)
 
-			transform.pos.x = rl.Clamp(transform.pos.x, 0, f32(SCREEN.x))
-			transform.pos.y = rl.Clamp(transform.pos.y, 0, f32(SCREEN.y))
+			transform.pos.x = rl.Clamp(transform.pos.x, limit.min_x, limit.max_x)
+			transform.pos.y = rl.Clamp(transform.pos.y, limit.min_y, limit.max_y)
 
 			ecs.set_component(w, &e, transform)
 		}
@@ -227,10 +230,6 @@ collision_system :: proc(w: ^World) {
 	for &e in w.entities {
 		if ecs.has_components(e, cmp.Transform, cmp.Limit_Transform) {
 			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
-
-
-			transform.pos.x = rl.Clamp(transform.pos.x, 0, f32(SCREEN.x))
-			transform.pos.y = rl.Clamp(transform.pos.y, 0, f32(SCREEN.y))
 
 			ecs.set_component(w, &e, transform)
 		}

@@ -3,9 +3,9 @@ package main
 import ".."
 import cmp "component"
 import "core:fmt"
+import "system"
 import rl "vendor:raylib"
 
-World :: ecs.World(cmp.Component)
 WORLD := ecs.new_world(cmp.Component)
 
 SCREEN: [2]i32 : {800, 600}
@@ -21,14 +21,14 @@ init :: proc() {
 		&WORLD,
 		// 
 		// Draw
-		draw_sprite_system,
+		system.draw_sprite_system,
+		system.debug_collider_shapes,
+		system.debug_transform,
 		// Debug draw
-		debug_collider_shapes,
-		debug_transform,
-		player_movement_system,
-		apply_gravity_system,
-		jump_system,
-		limit_transform_in_screen_system,
+		system.player_movement_system,
+		system.apply_gravity_system,
+		system.jump_system,
+		system.limit_transform_in_screen_system,
 	)
 	/*
 	ecs.register_parallel_systems(
@@ -47,7 +47,7 @@ init :: proc() {
 		cmp.Player_Control{},
 		cmp.Movement{speed = 1000},
 		cmp.Transform{pos = {200, 200}},
-		cmp.Limit_Transform{},
+		cmp.Limit_Transform{min_x = 0, min_y = 0, max_x = f32(SCREEN.x), max_y = f32(SCREEN.y)},
 		cmp.Sprite{texture = mario_png, size = {100, 100}, pivot = .Down},
 		cmp.Simple_Gravity{force = 1000},
 		cmp.Collider{shape = cmp.Box{size = {80, 100}}, pivot = .Down},

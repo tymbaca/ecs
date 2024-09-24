@@ -1,6 +1,6 @@
-package main
+package system
 
-import cmp "component"
+import cmp "../component"
 
 COLLISION_TRESHOLD :: 5 // move to collision_system
 

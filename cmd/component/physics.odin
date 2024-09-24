@@ -6,7 +6,10 @@ Transform :: struct {
 	pos: rl.Vector2,
 }
 
-Limit_Transform :: struct {}
+Limit_Transform :: struct {
+	min_x, max_x: f32,
+	min_y, max_y: f32,
+}
 
 Simple_Gravity :: struct {
 	force:    f32,
