@@ -49,6 +49,7 @@ create_entity :: proc {
 	create_entity_10,
 }
 
+@(private)
 create_entity_slice :: proc(
 	world: ^World($T),
 	components: []T,
@@ -64,38 +65,47 @@ create_entity_slice :: proc(
 	return e
 }
 
+@(private)
 create_entity_0 :: proc(world: ^World($T)) -> Entity {
 	return create_entity_slice(world, []T{})
 }
 
+@(private)
 create_entity_1 :: proc(world: ^World($T), cmp1: T) -> Entity {
 	return create_entity_slice(world, []T{cmp1})
 }
 
+@(private)
 create_entity_2 :: proc(world: ^World($T), cmp1, cmp2: T) -> Entity {
 	return create_entity_slice(world, []T{cmp1, cmp2})
 }
 
+@(private)
 create_entity_3 :: proc(world: ^World($T), cmp1, cmp2, cmp3: T) -> Entity {
 	return create_entity_slice(world, []T{cmp1, cmp2, cmp3})
 }
 
+@(private)
 create_entity_4 :: proc(world: ^World($T), cmp1, cmp2, cmp3, cmp4: T) -> Entity {
 	return create_entity_slice(world, []T{cmp1, cmp2, cmp3, cmp4})
 }
 
+@(private)
 create_entity_5 :: proc(world: ^World($T), cmp1, cmp2, cmp3, cmp4, cmp5: T) -> Entity {
 	return create_entity_slice(world, []T{cmp1, cmp2, cmp3, cmp4, cmp5})
 }
 
+@(private)
 create_entity_6 :: proc(world: ^World($T), cmp1, cmp2, cmp3, cmp4, cmp5, cmp6: T) -> Entity {
 	return create_entity_slice(world, []T{cmp1, cmp2, cmp3, cmp4, cmp5, cmp6})
 }
 
+@(private)
 create_entity_7 :: proc(world: ^World($T), cmp1, cmp2, cmp3, cmp4, cmp5, cmp6, cmp7: T) -> Entity {
 	return create_entity_slice(world, []T{cmp1, cmp2, cmp3, cmp4, cmp5, cmp6, cmp7})
 }
 
+@(private)
 create_entity_8 :: proc(
 	world: ^World($T),
 	cmp1, cmp2, cmp3, cmp4, cmp5, cmp6, cmp7, cmp8: T,
@@ -103,6 +113,7 @@ create_entity_8 :: proc(
 	return create_entity_slice(world, []T{cmp1, cmp2, cmp3, cmp4, cmp5, cmp6, cmp7, cmp8})
 }
 
+@(private)
 create_entity_9 :: proc(
 	world: ^World($T),
 	cmp1, cmp2, cmp3, cmp4, cmp5, cmp6, cmp7, cmp8, cmp9: T,
@@ -110,6 +121,7 @@ create_entity_9 :: proc(
 	return create_entity_slice(world, []T{cmp1, cmp2, cmp3, cmp4, cmp5, cmp6, cmp7, cmp8, cmp9})
 }
 
+@(private)
 create_entity_10 :: proc(
 	world: ^World($T),
 	cmp1, cmp2, cmp3, cmp4, cmp5, cmp6, cmp7, cmp8, cmp9, cmp10: T,
