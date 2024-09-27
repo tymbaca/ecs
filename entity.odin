@@ -1,8 +1,6 @@
 package ecs
 
 import "base:intrinsics"
-import "core:fmt"
-import "core:reflect"
 
 // Entity represents the Entity :) It holds it's ID and flags of 
 // components that it has

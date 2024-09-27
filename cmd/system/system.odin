@@ -122,7 +122,6 @@ debug_transform :: proc(w: ^World) {
 		if ecs.has_components(e, cmp.Transform) {
 			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
 
-			ecs.log("debug transform", transform)
 			rl.DrawCircleV(transform.pos, 6, TRANSFORM_COLOR)
 		}
 	}

@@ -6,6 +6,13 @@ import "core:fmt"
 import "core:os"
 
 main :: proc() {
+	when ODIN_DEBUG {
+		name: string
+	}
+
+	name = "fsd"
+
+	fmt.println(name)
 	/*
 	w := ecs.new_world()
 	w.components = ecs.ComponentStorage {
@@ -16,11 +23,15 @@ main :: proc() {
 	//ecs.set_component(&w, &e, ecs.PlayerControl{})
 
 	pc := ecs.get_component(w, 7, ecs.Player_Control)
-	ecs.log(pc)
 
 	pc2 := ecs.get_component(w, 6, ecs.Player_Control)
-	ecs.log(pc2)
     */
 	//--------------------------------------------------------------------------------------------------
 
+}
+
+log_types :: proc(Ts: ..typeid) {
+	for t in Ts {
+		fmt.println(t)
+	}
 }

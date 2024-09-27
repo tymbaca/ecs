@@ -1,9 +1,7 @@
 package ecs
 
-import "core:reflect"
 import "core:sync"
 import "core:thread"
-import rl "vendor:raylib"
 
 register_systems :: proc(w: ^World($T), systems: ..proc(_: ^World(T))) {
 	append(&w.systems, ..systems)
@@ -39,7 +37,6 @@ run_parallel_systems :: proc(world: ^World($T)) {
 
 	wg := &sync.Wait_Group{}
 	sync.wait_group_add(wg, system_count)
-	log("added to wg", system_count)
 
 	// Adding tasks for every system
 	for &system, i in world.parallel_systems {
@@ -50,13 +47,10 @@ run_parallel_systems :: proc(world: ^World($T)) {
 		}
 
 		thread.pool_add_task(world.pool, context.allocator, parallel_system_task_wrapper, &data[i])
-		log("added task", i)
 	}
 
-	log("waiting")
 	sync.wait(wg)
 	clear(&world.pool.tasks_done)
-	log("end")
 }
 
 @(private)

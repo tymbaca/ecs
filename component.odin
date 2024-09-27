@@ -2,11 +2,9 @@ package ecs
 
 import "core:fmt"
 import "core:reflect"
-import rl "vendor:raylib"
 
 // set_component created of replaces (if it already exists) the component on the entity.
 set_component :: proc(world: ^World($Component), entity: ^Entity, component: Component) {
-	log("hello from union")
 	component_type := reflect.union_variant_typeid(component)
 
 	// Init comp_map of that type if it doesn't exist
@@ -25,7 +23,6 @@ set_component :: proc(world: ^World($Component), entity: ^Entity, component: Com
 
 /* DOESN'T WORK
 set_component_concrete :: proc(world: ^World, entity: ^Entity, component: $T) {
-	log("hello from concrete")
 	component_type := typeid_of(type_of(component))
 
 	// Init comp_map of that type if it doesn't exist
@@ -52,10 +49,8 @@ must_get_component :: proc(
 ) -> T {
 	comp, ok := get_component(w, id, T)
 	if !ok {
-		log("MUST PANIC")
 		panic(fmt.aprintf("can't get component, caller: %v", loc))
 	}
-	log(comp, ok)
 
 	return comp
 }
@@ -77,14 +72,16 @@ get_component :: proc(w: World($Component), id: int, $T: typeid) -> (T, bool) #o
 	// Convert component to concrete type
 	final_component: T
 	final_component, ok = component.(T)
-	assert(
-		ok,
-		fmt.aprintf(
-			"got incorrent component type (%v) in map of type %T",
-			reflect.union_variant_typeid(component),
-			T{},
-		),
-	)
+	if !ok {
+		assert(
+			ok,
+			fmt.aprintf(
+				"got incorrent component type (%v) in map of type %T",
+				reflect.union_variant_typeid(component),
+				T{},
+			),
+		)
+	}
 
 	return final_component, true
 }

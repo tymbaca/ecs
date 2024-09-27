@@ -3,6 +3,7 @@ package main
 import ".."
 import cmp "component"
 import "core:fmt"
+import "core:mem"
 import "system"
 import rl "vendor:raylib"
 
@@ -29,6 +30,8 @@ init :: proc() {
 		system.apply_gravity_system,
 		system.jump_system,
 		system.limit_transform_in_screen_system,
+		/*
+        */
 	)
 	/*
 	ecs.register_parallel_systems(
@@ -55,14 +58,38 @@ init :: proc() {
 	)
 }
 
+ODIN_DEBUG :: true
+
+
 main :: proc() {
+	when ODIN_DEBUG {
+		track: mem.Tracking_Allocator
+		mem.tracking_allocator_init(&track, context.allocator)
+		context.allocator = mem.tracking_allocator(&track)
+
+		defer {
+			if len(track.allocation_map) > 0 {
+				fmt.eprintf("=== %v allocations not freed: ===\n", len(track.allocation_map))
+				for _, entry in track.allocation_map {
+					fmt.eprintf("- %v bytes @ %v\n", entry.size, entry.location)
+				}
+			}
+			if len(track.bad_free_array) > 0 {
+				fmt.eprintf("=== %v incorrect frees: ===\n", len(track.bad_free_array))
+				for entry in track.bad_free_array {
+					fmt.eprintf("- %p @ %v\n", entry.memory, entry.location)
+				}
+			}
+			mem.tracking_allocator_destroy(&track)
+		}
+	}
+
 	init()
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
 
-		ecs.log(WORLD)
 		ecs.update(&WORLD)
 
 		//rl.DrawFPS(0, 0)
