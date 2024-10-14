@@ -11,6 +11,9 @@ WORLD := ecs.new_world(cmp.Component)
 
 SCREEN: [2]i32 : {800, 600}
 
+DRAW_COLLECTION :: "draw"
+UPDATE_COLLECTION :: "update"
+
 init :: proc() {
 	rl.InitWindow(SCREEN.x, SCREEN.y, "smasher")
 	//rl.SetTargetFPS(60)
@@ -20,30 +23,19 @@ init :: proc() {
 
 	ecs.register_systems(
 		&WORLD,
-		// 
-		// Draw
-		system.draw_sprite_system,
-		system.debug_collider_shapes,
-		system.debug_transform,
-		// Debug draw
 		system.player_movement_system,
 		system.apply_gravity_system,
 		system.jump_system,
 		system.limit_transform_in_screen_system,
-		/*
-        */
+		collection = "update",
 	)
-	/*
-	ecs.register_parallel_systems(
+	ecs.register_systems(
 		&WORLD,
-		// 
-		// Logic
-		ecs.to_parallel_system(player_movement_system),
-		ecs.to_parallel_system(apply_gravity_system),
-		ecs.to_parallel_system(jump_system),
-		ecs.to_parallel_system(limit_transform_in_screen_system),
+		system.draw_sprite_system,
+		system.debug_collider_shapes,
+		system.debug_transform,
+		collection = "draw",
 	)
-    */
 
 	mar := ecs.create_entity(
 		&WORLD,
@@ -103,6 +95,10 @@ main :: proc() {
 		rl.ClearBackground(rl.BLACK)
 
 		ecs.update(&WORLD)
+        // or:
+		// ecs.update_time(&WORLD)
+		// ecs.update_collection(&WORLD, "update")
+		// ecs.update_collection(&WORLD, "draw")
 
 		//rl.DrawFPS(0, 0)
 		rl.EndDrawing()

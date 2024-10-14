@@ -2,14 +2,19 @@ package ecs
 
 import "core:sync"
 import "core:thread"
+import "core:fmt"
 
 System_Collection :: struct($T: typeid) {
 	systems: [dynamic]proc(world: ^World(T)),
 }
 
-register_systems :: proc(w: ^World($T), systems: ..proc(_: ^World(T)), collection_name := "default") {
-    collection := &w.systems_collections[collection_name]
-	append(&collection.systems, ..systems)
+register_systems :: proc(w: ^World($T), systems: ..proc(_: ^World(T)), collection := "default") {
+    if collection not_in w.systems_collections {
+        w.systems_collections[collection] = System_Collection(T){}
+    }
+
+    collection_ := &w.systems_collections[collection]
+	append(&collection_.systems, ..systems)
 }
 
 // generic World(T) can't be used with threads, user must infer the type in his parallel system.

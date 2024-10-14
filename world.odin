@@ -4,6 +4,7 @@ import "base:intrinsics"
 import "core:os"
 import "core:thread"
 import "core:time"
+import "core:fmt"
 
 World :: struct($T: typeid) {
 	entities:            [dynamic]Entity,
@@ -34,6 +35,7 @@ update :: proc(world: ^World($T)) {
 	update_time(world)
 
 	for _, collection in world.systems_collections {
+        fmt.println("updating collection:", collection)
 		for system in collection.systems {
 			system(world)
 		}
@@ -43,9 +45,9 @@ update :: proc(world: ^World($T)) {
 
 // `update_collection` only updates the specified collection of systems, without 
 // updating the time info. In order to update the time call `update_time` directrly
-update_collection :: proc(world: ^World($T), collection := "default") {
-	collection_name := world.systems_collections[collection_name]
-	for system in collection_name.systems {
+update_collection :: proc(world: ^World($T), collection: string) {
+	collection_ := world.systems_collections[collection]
+	for system in collection_.systems {
 		system(world)
 	}
 }
