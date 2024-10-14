@@ -45,13 +45,25 @@ init :: proc() {
 	)
     */
 
-	e := ecs.create_entity(
+	mar := ecs.create_entity(
 		&WORLD,
 		cmp.Player_Control{},
 		cmp.Movement{speed = 1000},
 		cmp.Transform{pos = {200, 200}},
 		cmp.Limit_Transform{min_x = 0, min_y = 0, max_x = f32(SCREEN.x), max_y = f32(SCREEN.y)},
 		cmp.Sprite{texture = mario_png, size = {100, 100}, pivot = .Down},
+		cmp.Simple_Gravity{force = 1000},
+		cmp.Collider{shape = cmp.Box{size = {80, 100}}, pivot = .Down},
+		cmp.Jump{power = 2600, falloff = 2600},
+	)
+
+	mush := ecs.create_entity(
+		&WORLD,
+		//cmp.Player_Control{},
+		cmp.Movement{speed = 1000},
+		cmp.Transform{pos = {200, 200}},
+		cmp.Limit_Transform{min_x = 0, min_y = 0, max_x = f32(SCREEN.x), max_y = f32(SCREEN.y)},
+		cmp.Sprite{texture = mushroom_png, size = {100, 100}, pivot = .Down},
 		cmp.Simple_Gravity{force = 1000},
 		cmp.Collider{shape = cmp.Box{size = {80, 100}}, pivot = .Down},
 		cmp.Jump{power = 2600, falloff = 2600},

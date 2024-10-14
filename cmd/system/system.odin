@@ -183,7 +183,7 @@ apply_gravity_system :: proc(w: ^World) {
 
 jump_system :: proc(w: ^World) {
 	for &e in w.entities {
-		if ecs.has_components(e, cmp.Simple_Gravity, cmp.Transform, cmp.Jump) {
+		if ecs.has_components(e, cmp.Player_Control, cmp.Simple_Gravity, cmp.Transform, cmp.Jump) {
 			transform := ecs.must_get_component(w^, e.id, cmp.Transform)
 			jump := ecs.must_get_component(w^, e.id, cmp.Jump)
 			gravity := ecs.must_get_component(w^, e.id, cmp.Simple_Gravity)
