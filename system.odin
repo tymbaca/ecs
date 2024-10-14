@@ -11,6 +11,7 @@ register_systems :: proc(w: ^World($T), systems: ..proc(_: ^World(T))) {
 // `world_from_rawptr` can be used for convenience.
 Parallel_System :: #type proc(_: rawptr)
 
+@(deprecated="experimental")
 register_parallel_systems :: proc(w: ^World($T), systems: ..Parallel_System) {
 	append(&w.parallel_systems, ..systems)
 }
