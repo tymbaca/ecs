@@ -3,15 +3,20 @@ package ecs
 import "core:sync"
 import "core:thread"
 
-register_systems :: proc(w: ^World($T), systems: ..proc(_: ^World(T))) {
-	append(&w.systems, ..systems)
+System_Collection :: struct($T: typeid) {
+	systems: [dynamic]proc(world: ^World(T)),
+}
+
+register_systems :: proc(w: ^World($T), systems: ..proc(_: ^World(T)), collection_name := "default") {
+    collection := &w.systems_collections[collection_name]
+	append(&collection.systems, ..systems)
 }
 
 // generic World(T) can't be used with threads, user must infer the type in his parallel system.
 // `world_from_rawptr` can be used for convenience.
 Parallel_System :: #type proc(_: rawptr)
 
-@(deprecated="experimental")
+@(deprecated = "experimental")
 register_parallel_systems :: proc(w: ^World($T), systems: ..Parallel_System) {
 	append(&w.parallel_systems, ..systems)
 }
@@ -19,13 +24,6 @@ register_parallel_systems :: proc(w: ^World($T), systems: ..Parallel_System) {
 // Convenience wrapper to convert basic system to `Parallel_System`
 to_parallel_system :: proc($system: proc(_: ^World($T))) -> Parallel_System {
 	return proc(ptr: rawptr) {system((^World(T))(ptr))}
-}
-
-@(private)
-run_systems :: proc(world: ^World($T)) {
-	for system in world.systems {
-		system(world)
-	}
 }
 
 // TODO allocator for each task?
