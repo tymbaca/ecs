@@ -31,6 +31,7 @@ new_world :: proc($T: typeid) -> World(T) where intrinsics.type_is_union(T) {
 	}
 }
 
+// Should be called only from main loop.
 update :: proc(world: ^World($T)) {
 	update_time(world)
 
@@ -44,7 +45,8 @@ update :: proc(world: ^World($T)) {
 }
 
 // `update_collection` only updates the specified collection of systems, without 
-// updating the time info. In order to update the time call `update_time` directrly
+// updating the time info. In order to update the time call `update_time` directrly.
+// Should be called only from main loop.
 update_collection :: proc(world: ^World($T), collection: string) {
 	collection_ := world.systems_collections[collection]
 	for system in collection_.systems {
@@ -53,6 +55,7 @@ update_collection :: proc(world: ^World($T), collection: string) {
 }
 
 // `update_time` must be called only once per frame
+// Should be called only from main loop.
 update_time :: proc(world: ^World($T)) {
 	if world.prev_frame_time == nil {
 		world.prev_frame_time = time.now()
