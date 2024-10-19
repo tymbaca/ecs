@@ -7,18 +7,21 @@ import "core:time"
 import "core:fmt"
 
 World :: struct($T: typeid) {
-	entities:            [dynamic]Entity,
 	components:          map[typeid]map[int]T,
 	systems_collections: map[string]System_Collection(T),
 	parallel_systems:    [dynamic]Parallel_System,
 	pool:                ^thread.Pool,
-	//
+
+	entities:            [dynamic]Entity,
+    // Pointer to user defined data, can be used for whatever you want
+    user_data: rawptr,
+
 	prev_frame_time:     Maybe(time.Time),
 	delta:               f32, // in secs
 	delta_dur:           time.Duration,
 }
 
-new_world :: proc($T: typeid) -> World(T) where intrinsics.type_is_union(T) {
+new_world :: proc($T: typeid, user_data: rawptr = nil) -> World(T) where intrinsics.type_is_union(T) {
 	pool := new(thread.Pool)
 	thread.pool_init(pool, context.allocator, os.processor_core_count())
 	thread.pool_start(pool)
@@ -28,6 +31,7 @@ new_world :: proc($T: typeid) -> World(T) where intrinsics.type_is_union(T) {
 		components = make(map[typeid]map[int]T),
 		systems_collections = make(map[string]System_Collection(T)),
 		pool = pool,
+        user_data = user_data,
 	}
 }
 

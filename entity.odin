@@ -12,17 +12,6 @@ Entity :: struct {
 // ComponentSet is a set of flags of component types that entity owns
 ComponentSet :: map[typeid]struct {}
 
-new_entity :: proc() -> Entity {
-	@(static)id := 0
-	id += 1
-	e := Entity {
-		id         = id,
-		components = make(ComponentSet),
-	}
-
-	return e
-}
-
 has_components :: proc(e: Entity, types: ..typeid) -> bool {
 	for t in types {
 		if t not_in e.components {
@@ -130,4 +119,29 @@ create_entity_10 :: proc(
 		world,
 		[]T{cmp1, cmp2, cmp3, cmp4, cmp5, cmp6, cmp7, cmp8, cmp9, cmp10},
 	)
+}
+
+@(private)
+new_entity :: proc() -> Entity {
+	@(static)id := 0
+	id += 1
+	e := Entity {
+		id         = id,
+		components = make(ComponentSet),
+	}
+
+	return e
+}
+
+// `remove_entity` removes the entity from the world and returns true if succeded. 
+// If that id doesn't exists returns false.
+remove_entity :: proc(world: ^World($T), id: int) -> bool {
+    for e, i in world.entities {
+        if e.id == id {
+            unordered_remove(&world.entities, i)
+            return true
+        }
+    }
+
+    return false
 }
