@@ -16,6 +16,18 @@ set_component :: proc(world: ^World($Component), entity: ^Entity, component: Com
 	entity.components[component_type] = {}
 }
 
+// `update_component` updates the component on entity with passed id. If there is no
+// such component on that entity or if entity with id doesn't exist - it's no-op.
+update_component :: proc(world: ^World($Component), id: int, component: Component) {
+	component_type := reflect.union_variant_typeid(component)
+
+	comp_map := world.components[component_type]
+    if id in comp_map {
+        comp_map[id] = component
+    }
+	world.components[component_type] = comp_map // in case of map evacuation
+}
+
 /* DOESN'T WORK
 set_component_concrete :: proc(world: ^World, entity: ^Entity, component: $T) {
 	component_type := typeid_of(type_of(component))
