@@ -17,7 +17,9 @@ register_parallel_systems :: proc(w: ^World($T), systems: ..Parallel_System) {
 
 // Convenience wrapper to convert basic system to `Parallel_System`
 to_parallel_system :: proc($system: proc(_: ^World($T))) -> Parallel_System {
-	return proc(ptr: rawptr) {system((^World(T))(ptr))}
+	return proc(ptr: rawptr) {
+        system((^World(T))(ptr))
+    }
 }
 
 @(private)
