@@ -77,7 +77,6 @@ ecs_stress_test :: proc(t: ^testing.T) {
 	w := &world
 
 	register(&world, apply_velocity)
-	register(&world, apply_velocity)
 	register(&world, apply_gravity)
 
     start := time.tick_now()
