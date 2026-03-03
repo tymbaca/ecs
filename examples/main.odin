@@ -1,47 +1,42 @@
 package examples
 
+import "core:time"
 import "core:fmt"
-import "core:container/xar"
 import ecs ".."
 
-Position :: struct {
-    pos: [2]f64,
-}
-
-Velocity :: struct {
-    vel: [2]f64,
-}
+Position :: distinct [2]f64
+Velocity :: distinct [2]f64
 
 main :: proc() {
     allocator := context.allocator
 
-    size := 0
-    for t in ([]typeid{Position, Velocity}) {
-        size += size_of(t)
+    world: ecs.World
+    ecs.init(&world, allocator, {Position, Velocity})
+    
+    ecs.register(&world, proc(w: ^ecs.World) {
+        for entity in ecs.query(w, {Position, Velocity}) {
+            pos := ecs.get(w, entity, Position)
+            vel := ecs.get(w, entity, Velocity)
+    
+            pos += Position(vel)
+            fmt.println("entity", entity, "pos", pos, "vel", vel)
+    
+            ecs.set(w, entity, pos)
+            ecs.set(w, entity, vel)
+        }
+    })
+
+    for _ in 0..<100 {
+        e := ecs.create(&world)
+        ecs.set(&world, e, Position{10, 20})
     }
 
-    ar: xar.Array([size]u8, 6)
-
-    // stride := ecs.stride({Position, Velocity})
-    // world := ecs.new(stride, allocator)
-    //
-    // fmt.println(world)
-    //
-    // ecs.register_system(&world, proc(w: ^ecs.World) {
-    //     for entity_id in ecs.query(w, {Position, Velocity}) {
-    //         pos := ecs.get(w, entity_id, Position)
-    //         vel := ecs.get(w, entity_id, Velocity)
-    //
-    //         // is this allowed?
-    //         // i think we can to this with w.arena. it will be of size `entity_count * sizeof(Entity_ID) * ??? can be specified`
-    //         for another_id in ecs.query(w, {Position}) {
-    //
-    //         }
-    //
-    //         ecs.set(w, entity_id, pos)
-    //         ecs.set(w, entity_id, vel)
-    //     }
-    // })
+    for {
+        time.sleep(time.Second)
+        ecs.update(&world)
+    }
+    
+    // get_ptr is rejected
     //
     // ecs.register_system(&world, proc(w: ^ecs.World) {
     //     for entity_id in ecs.query(w, {Position, Velocity}) {
