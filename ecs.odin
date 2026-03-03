@@ -74,8 +74,12 @@ destroy :: proc(w: ^World) {
 update :: proc(w: ^World) {
 	for system in w.systems {
 		mem.dynamic_arena_reset(&w.frame_arena)
-		system(w)
 
+        system_start := time.tick_now()
+		system(w)
+        log("system: dur", time.tick_since(system_start))
+
+        cache_inv_start := time.tick_now()
         for type_set, cached_result in w.cache {
             for cached_type in type_set {
                 if cached_type in w.cache_cmp_to_discard {
@@ -85,6 +89,7 @@ update :: proc(w: ^World) {
             }
         }
         clear(&w.cache_cmp_to_discard)
+        log("cache invalidation: dur", time.tick_since(cache_inv_start))
 	}
 }
 
@@ -210,7 +215,8 @@ Query_Hint :: struct {
 }
 
 query :: proc(w: ^World, types: []typeid, hint := Query_Hint{}) -> []Entity {
-    log("query: start", types)
+    start := time.tick_now()
+    defer log("query:", time.tick_since(start), types)
 
     if !hint.disable_cache && len(types) <= CACHED_QUERY_KEY_SIZE {
         key := to_cached_query_key(types)
@@ -222,11 +228,6 @@ query :: proc(w: ^World, types: []typeid, hint := Query_Hint{}) -> []Entity {
     }
 
 	result := make([dynamic]Entity, mem.dynamic_arena_allocator(&w.frame_arena))
-
-    when DEBUG {
-        start := time.tick_now()
-        defer log("query:", time.tick_since(start), types)
-    }
 
 	id := 0
 	outter: for entity in _iterate(w, &id) {

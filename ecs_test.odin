@@ -6,6 +6,12 @@ import "core:time"
 import "core:log"
 import "core:testing"
 
+/*
+
+1. query caching - 50ms -> 40ms, ~20%
+
+*/
+
 Position :: distinct [2]f64
 Velocity :: distinct [2]f64
 Gravity :: struct {
@@ -119,7 +125,7 @@ apply_velocity :: proc(w: ^World) {
 }
 
 apply_gravity :: proc(w: ^World) {
-	for entity in query(w, {Gravity, Velocity}, {disable_cache = true}) {
+	for entity in query(w, {Gravity, Velocity}) {
 		grav := get(w, entity, Gravity)
 		vel := get(w, entity, Velocity)
 
