@@ -77,7 +77,6 @@ ecs_stress_test :: proc(t: ^testing.T) {
 	w := &world
 
 	register(&world, apply_velocity)
-	register(&world, apply_velocity)
 	register(&world, apply_gravity)
 
     start := time.tick_now()
@@ -92,7 +91,6 @@ ecs_stress_test :: proc(t: ^testing.T) {
 	}
 
     log.info("create dur", time.tick_since(start))
-
 
     N2 :: 100
     frame_durs: [N2]time.Duration
@@ -121,7 +119,7 @@ apply_velocity :: proc(w: ^World) {
 }
 
 apply_gravity :: proc(w: ^World) {
-	for entity in query(w, {Gravity, Velocity}) {
+	for entity in query(w, {Gravity, Velocity}, {disable_cache = true}) {
 		grav := get(w, entity, Gravity)
 		vel := get(w, entity, Velocity)
 

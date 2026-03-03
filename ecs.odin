@@ -1,23 +1,32 @@
 package ecs
 
+import "core:time"
 import "base:intrinsics"
 import "base:runtime"
 import "core:mem"
-import "core:strings"
 
 World :: struct {
 	offsets:     map[typeid]int,
 	storage:     [dynamic]u8,
+	stride:      int,
 	freelist:    [dynamic]Entity,
 	systems:     [dynamic]System,
-	stride:      int,
 	next_id:     int,
+
+    cache:           map[Cached_Query_Key][]Entity,
+    discarded_cache: map[Cached_Query_Key]struct{},
+
 	frame_arena: mem.Dynamic_Arena,
 	allocator:   runtime.Allocator,
 	userdata:    rawptr,
 	// TODO:
 	// delta_time:  time.Duration,
 }
+
+@(private)
+CACHED_QUERY_KEY_SIZE :: 32
+@(private)
+Cached_Query_Key :: [CACHED_QUERY_KEY_SIZE]typeid
 
 Entity :: struct {
 	id:         int,
@@ -35,6 +44,7 @@ init :: proc(w: ^World, types: []typeid, allocator: runtime.Allocator) {
 	w.offsets = make(map[typeid]int, allocator)
 	w.storage = make([dynamic]u8, allocator)
 	w.systems = make([dynamic]System, allocator)
+    w.cache = make(map[Cached_Query_Key][]Entity, allocator)
 	mem.dynamic_arena_init(&w.frame_arena, allocator, allocator)
 
 	size := size_of(Block_Header)
@@ -59,6 +69,7 @@ destroy :: proc(w: ^World) {
 	delete(w.offsets)
 	delete(w.storage)
 	delete(w.systems)
+	delete(w.cache)
     mem.dynamic_arena_destroy(&w.frame_arena)
 }
 
@@ -75,6 +86,7 @@ register :: proc(w: ^World, system: System, hint: Maybe(Hint) = nil) {
 
 kill :: proc(w: ^World, entity: Entity) {
 	append(&w.freelist, entity) // TODO: duplicate detection?
+    // TODO: zero components
 }
 
 create :: proc(w: ^World) -> Entity {
@@ -105,6 +117,23 @@ create :: proc(w: ^World) -> Entity {
 	return entity
 }
 
+get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok {
+    offset, ok := w.offsets[T]
+    if !ok {
+        return {}, false
+    }
+    
+	header := (^Block_Header)(&w.storage[entity.id * w.stride])
+	assert(header.entity.id == entity.id)
+
+	if entity.generation < header.entity.generation {
+		return {}, false
+	}
+
+	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
+	return cmp.component, cmp.header.set
+}
+
 set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
     offset, ok := w.offsets[T]
     if !ok {
@@ -125,25 +154,47 @@ set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
 	return true
 }
 
-get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok {
+unset :: proc(w: ^World, entity: Entity, $T: typeid) -> bool {
     offset, ok := w.offsets[T]
     if !ok {
-        return {}, false
+        return false
     }
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
 	assert(header.entity.id == entity.id)
 
 	if entity.generation < header.entity.generation {
-		return {}, false
+		return false
 	}
 
 	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
-	return cmp.component, cmp.header.set
+	cmp.header.set = false
+
+	return true
 }
 
-query :: proc(w: ^World, types: []typeid) -> []Entity {
+Query_Hint :: struct {
+    disable_cache: bool,
+}
+
+query :: proc(w: ^World, types: []typeid, hint := Query_Hint{}) -> []Entity {
+    log("query: start", types)
+
+    if !hint.disable_cache && len(types) <= CACHED_QUERY_KEY_SIZE {
+        key := to_cached_query_key(types)
+        result, ok := w.cache[key]
+        if ok {
+            log("query: found cached", result)
+            return result
+        }
+    }
+
 	result := make([dynamic]Entity, mem.dynamic_arena_allocator(&w.frame_arena))
+
+    when DEBUG {
+        start := time.tick_now()
+        defer log("query:", time.tick_since(start), types)
+    }
 
 	id := 0
 	outter: for entity in _iterate(w, &id) {
@@ -156,7 +207,26 @@ query :: proc(w: ^World, types: []typeid) -> []Entity {
 		append(&result, entity)
 	}
 
+    if !hint.disable_cache && len(types) <= CACHED_QUERY_KEY_SIZE {
+        key := to_cached_query_key(types)
+
+        cached_result := make([]Entity, len(result), w.allocator)
+        copy(cached_result, result[:])
+        w.cache[key] = cached_result
+
+        return cached_result
+    }
+
 	return result[:]
+}
+
+@(private)
+to_cached_query_key :: proc(types: []typeid) -> (k: Cached_Query_Key) {
+    for typ, i in types {
+        k[i] = typ
+    }
+
+    return k
 }
 
 @(private)
