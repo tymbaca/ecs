@@ -3,28 +3,7 @@ package ecs
 import "base:intrinsics"
 import "base:runtime"
 import "core:mem"
-
-init :: proc(w: ^World, allocator: runtime.Allocator, types: []typeid) {
-	w.offsets = make(map[typeid]int, allocator)
-	w.storage = make([dynamic]u8, allocator)
-	w.systems = make([dynamic]System, allocator)
-	mem.dynamic_arena_init(&w.frame_arena, allocator, allocator)
-
-	size := size_of(Block_Header)
-	for t in types {
-		w.offsets[t] = size
-		size += size_of(Component_Header)
-		size += type_info_of(t).size
-	}
-
-	w.stride = size
-	return
-}
-
-Entity :: struct {
-	id:         int,
-	generation: int,
-}
+import "core:strings"
 
 World :: struct {
 	offsets:     map[typeid]int,
@@ -34,18 +13,53 @@ World :: struct {
 	stride:      int,
 	next_id:     int,
 	frame_arena: mem.Dynamic_Arena,
+	allocator:   runtime.Allocator,
 	userdata:    rawptr,
 	// TODO:
 	// delta_time:  time.Duration,
 }
 
+Entity :: struct {
+	id:         int,
+	generation: int,
+}
+
 System :: #type proc(w: ^World)
 
-update :: proc(w: ^World) {
-    log("new update")
-	mem.dynamic_arena_reset(&w.frame_arena)
+init :: proc(w: ^World, types: []typeid, allocator: runtime.Allocator) {
+	w.offsets = make(map[typeid]int, allocator)
+	w.storage = make([dynamic]u8, allocator)
+	w.systems = make([dynamic]System, allocator)
+	mem.dynamic_arena_init(&w.frame_arena, allocator, allocator)
 
+	size := size_of(Block_Header)
+	for t in types {
+		w.offsets[t] = size
+		log("offset of", t, "is", size)
+		size += mem.align_forward_int(size_of(Component_Header), type_info_of(t).align)
+		size += type_info_of(t).size
+	}
+
+	w.stride = size
+	return
+}
+
+reserve :: proc(w: ^World, entity_count: int) {
+    if cap(w.storage) < (entity_count * w.stride) {
+        resize(&w.storage, entity_count * w.stride)
+    }
+}
+
+destroy :: proc(w: ^World) {
+	delete(w.offsets)
+	delete(w.storage)
+	delete(w.systems)
+    mem.dynamic_arena_destroy(&w.frame_arena)
+}
+
+update :: proc(w: ^World) {
 	for system in w.systems {
+		mem.dynamic_arena_reset(&w.frame_arena)
 		system(w)
 	}
 }
@@ -69,11 +83,9 @@ create :: proc(w: ^World) -> Entity {
 		return entity
 	}
 
-	assert(len(w.storage) == w.next_id * w.stride)
-
 	// resize if needed
-	if cap(w.storage) - len(w.storage) < w.stride {
-		resize(&w.storage, len(w.storage) + w.stride)
+	if len(w.storage) < w.next_id * w.stride + w.stride {
+		resize(&w.storage, w.next_id * w.stride + w.stride)
 	}
 
 	entity := Entity {
@@ -119,10 +131,10 @@ query :: proc(w: ^World, types: []typeid) -> []Entity {
 	result := make([dynamic]Entity, mem.dynamic_arena_allocator(&w.frame_arena))
 
 	id := 0
-	for entity in _iterate(w, &id) {
+	outter: for entity in _iterate(w, &id) {
 		for t in types {
 			if !_has(w, entity.id, t) {
-				continue
+				continue outter
 			}
 		}
 
@@ -157,7 +169,7 @@ Block_Header :: struct {
 
 @(private)
 Component_Header :: struct {
-	set:       bool,
+	set: bool,
 }
 
 @(private)
