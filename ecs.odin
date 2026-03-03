@@ -26,6 +26,11 @@ Entity :: struct {
 
 System :: #type proc(w: ^World)
 
+// TODO:
+Hint :: struct {
+    
+}
+
 init :: proc(w: ^World, types: []typeid, allocator: runtime.Allocator) {
 	w.offsets = make(map[typeid]int, allocator)
 	w.storage = make([dynamic]u8, allocator)
@@ -64,7 +69,7 @@ update :: proc(w: ^World) {
 	}
 }
 
-register :: proc(w: ^World, system: System) {
+register :: proc(w: ^World, system: System, hint: Maybe(Hint) = nil) {
 	append(&w.systems, system)
 }
 
@@ -101,6 +106,11 @@ create :: proc(w: ^World) -> Entity {
 }
 
 set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
+    offset, ok := w.offsets[T]
+    if !ok {
+        return false
+    }
+    
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
 	assert(header.entity.id == entity.id)
 
@@ -108,7 +118,7 @@ set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
 		return false
 	}
 
-	cmp := (^Component(T))(&w.storage[entity.id * w.stride + w.offsets[T]])
+	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
 	cmp.header.set = true
 	cmp.component = component
 
@@ -116,6 +126,11 @@ set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
 }
 
 get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok {
+    offset, ok := w.offsets[T]
+    if !ok {
+        return {}, false
+    }
+    
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
 	assert(header.entity.id == entity.id)
 
@@ -123,7 +138,7 @@ get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok {
 		return {}, false
 	}
 
-	cmp := (^Component(T))(&w.storage[entity.id * w.stride + w.offsets[T]])
+	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
 	return cmp.component, cmp.header.set
 }
 
