@@ -8,7 +8,7 @@ import "core:testing"
 
 /*
 
-1. query caching - 50ms -> 40ms, ~20%
+1. query caching - 50ms -> 30ms, ~40%
 
 */
 
@@ -104,6 +104,7 @@ ecs_stress_test :: proc(t: ^testing.T) {
     for i in 0 ..< N2 {
         frame_start := time.tick_now()
         update(w)
+        unset(w, {10, 999999}, Position)
         frame_durs[i] = time.tick_since(frame_start)
     }
 

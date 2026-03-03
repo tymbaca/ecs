@@ -103,7 +103,7 @@ kill :: proc(w: ^World, entity: Entity) {
         return
     }
 
-	append(&w.freelist, entity) // TODO: duplicate detection?
+	append(&w.freelist, entity)
 
     // discard cache
     for typ, offset in w.offsets {
@@ -203,7 +203,7 @@ unset :: proc(w: ^World, entity: Entity, $T: typeid) -> bool {
 
 	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
     if cmp.header.set == true {
-        mark_for_cache_discard(w, typ)
+        mark_for_cache_discard(w, T)
     }
 	cmp.header.set = false
 
