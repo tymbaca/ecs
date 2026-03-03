@@ -1,8 +1,11 @@
 package ecs
 
 import "core:fmt"
-DEBUG :: true
+
+DEBUG :: false
 
 log :: proc(args: ..any) {
-    fmt.println(..args)
+    if DEBUG {
+        fmt.println(..args)
+    }
 }

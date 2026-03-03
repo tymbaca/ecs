@@ -13,8 +13,8 @@ World :: struct {
 	systems:     [dynamic]System,
 	next_id:     int,
 
-    cache:           map[Cached_Query_Key][]Entity,
-    discarded_cache: map[Cached_Query_Key]struct{},
+    cache:                map[Cached_Query_Key][]Entity,
+    cache_cmp_to_discard: map[typeid]struct{},
 
 	frame_arena: mem.Dynamic_Arena,
 	allocator:   runtime.Allocator,
@@ -45,12 +45,15 @@ init :: proc(w: ^World, types: []typeid, allocator: runtime.Allocator) {
 	w.storage = make([dynamic]u8, allocator)
 	w.systems = make([dynamic]System, allocator)
     w.cache = make(map[Cached_Query_Key][]Entity, allocator)
+    w.cache_cmp_to_discard = make(map[typeid]struct{}, allocator)
 	mem.dynamic_arena_init(&w.frame_arena, allocator, allocator)
+	w.allocator = allocator
 
 	size := size_of(Block_Header)
 	for t in types {
 		w.offsets[t] = size
 		log("offset of", t, "is", size)
+
 		size += mem.align_forward_int(size_of(Component_Header), type_info_of(t).align)
 		size += type_info_of(t).size
 	}
@@ -59,17 +62,12 @@ init :: proc(w: ^World, types: []typeid, allocator: runtime.Allocator) {
 	return
 }
 
-reserve :: proc(w: ^World, entity_count: int) {
-    if cap(w.storage) < (entity_count * w.stride) {
-        resize(&w.storage, entity_count * w.stride)
-    }
-}
-
 destroy :: proc(w: ^World) {
 	delete(w.offsets)
 	delete(w.storage)
 	delete(w.systems)
 	delete(w.cache)
+	delete(w.cache_cmp_to_discard)
     mem.dynamic_arena_destroy(&w.frame_arena)
 }
 
@@ -77,6 +75,16 @@ update :: proc(w: ^World) {
 	for system in w.systems {
 		mem.dynamic_arena_reset(&w.frame_arena)
 		system(w)
+
+        for type_set, cached_result in w.cache {
+            for cached_type in type_set {
+                if cached_type in w.cache_cmp_to_discard {
+                    log("cache invalidated for:", type_set)
+                    delete(cached_result, w.allocator)
+                }
+            }
+        }
+        clear(&w.cache_cmp_to_discard)
 	}
 }
 
@@ -85,17 +93,29 @@ register :: proc(w: ^World, system: System, hint: Maybe(Hint) = nil) {
 }
 
 kill :: proc(w: ^World, entity: Entity) {
+    header := (^Block_Header)(&w.storage[entity.id * w.stride])
+    if entity.generation < header.entity.generation { // already killed
+        return
+    }
+
 	append(&w.freelist, entity) // TODO: duplicate detection?
-    // TODO: zero components
+
+    // discard cache
+    for typ, offset in w.offsets {
+        cmp_header := (^Component_Header)(&w.storage[entity.id * w.stride + offset])
+        if cmp_header.set == true {
+            mark_for_cache_discard(w, typ)
+        }
+        cmp_header.set = false
+    }
 }
 
 create :: proc(w: ^World) -> Entity {
 	if len(w.freelist) > 0 {
 		entity := pop(&w.freelist)
-		entity.generation += 1
 
 		header := (^Block_Header)(&w.storage[entity.id * w.stride])
-		header.entity = entity
+		header.entity.id = entity.id
 
 		return entity
 	}
@@ -115,6 +135,12 @@ create :: proc(w: ^World) -> Entity {
 	header.entity = entity
 
 	return entity
+}
+
+reserve :: proc(w: ^World, entity_count: int) {
+    if cap(w.storage) < (entity_count * w.stride) {
+        resize(&w.storage, entity_count * w.stride)
+    }
 }
 
 get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok {
@@ -148,6 +174,9 @@ set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
 	}
 
 	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
+    if cmp.header.set == false {
+        mark_for_cache_discard(w, T)
+    }
 	cmp.header.set = true
 	cmp.component = component
 
@@ -168,6 +197,9 @@ unset :: proc(w: ^World, entity: Entity, $T: typeid) -> bool {
 	}
 
 	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
+    if cmp.header.set == true {
+        mark_for_cache_discard(w, typ)
+    }
 	cmp.header.set = false
 
 	return true
@@ -184,7 +216,7 @@ query :: proc(w: ^World, types: []typeid, hint := Query_Hint{}) -> []Entity {
         key := to_cached_query_key(types)
         result, ok := w.cache[key]
         if ok {
-            log("query: found cached", result)
+            log("query: found cached, len:", len(result))
             return result
         }
     }
@@ -245,6 +277,11 @@ _iterate :: proc(w: ^World, id: ^int) -> (Entity, bool) {
 _has :: proc(w: ^World, entity_id: int, T: typeid) -> bool {
 	cmp_header := (^Component_Header)(&w.storage[entity_id * w.stride + w.offsets[T]])
 	return cmp_header.set
+}
+
+@(private)
+mark_for_cache_discard :: proc(w: ^World, t: typeid) {
+    w.cache_cmp_to_discard[t] = {}
 }
 
 @(private)
