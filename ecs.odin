@@ -66,6 +66,9 @@ destroy :: proc(w: ^World) {
 	delete(w.offsets)
 	delete(w.storage)
 	delete(w.systems)
+    for _, cached_result in w.cache {
+        delete(cached_result, w.allocator)
+    }
 	delete(w.cache)
 	delete(w.cache_cmp_to_discard)
     mem.dynamic_arena_destroy(&w.frame_arena)
@@ -80,11 +83,13 @@ update :: proc(w: ^World) {
         log("system: dur", time.tick_since(system_start))
 
         cache_inv_start := time.tick_now()
-        for type_set, cached_result in w.cache {
+        loop: for type_set, cached_result in w.cache {
             for cached_type in type_set {
                 if cached_type in w.cache_cmp_to_discard {
                     log("cache invalidated for:", type_set)
                     delete(cached_result, w.allocator)
+                    delete_key(&w.cache, type_set)
+                    continue loop
                 }
             }
         }
