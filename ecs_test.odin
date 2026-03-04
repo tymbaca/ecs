@@ -20,6 +20,30 @@ Gravity :: struct {
 	force:   [2]f64,
 }
 
+/*
+➜  ecs git:(main) odin test .
+[INFO ] --- [2026-03-04 10:37:59] Starting test runner with 1 thread. Set with -define:ODIN_TEST_THREADS=n.
+[INFO ] --- [2026-03-04 10:37:59] The random seed sent to every test is: 172294833546361. Set with -define:ODIN_TEST_RANDOM_SEED=n.
+[INFO ] --- [2026-03-04 10:37:59] Memory tracking is enabled. Tests will log their memory usage if there's an issue.
+[INFO ] --- [2026-03-04 10:37:59] < Final Mem/ Total Mem> <  Peak Mem> (#Free/Alloc) :: [package.test_name]
+[INFO ] --- [2026-03-04 10:37:59] [ecs_test.odin:45:ecs_stress_test()] create dur 224.314ms
+[INFO ] --- [2026-03-04 10:38:09] [ecs_test.odin:56:ecs_stress_test()] avg frame dur 95.945228ms
+ecs  [|                       ]         1 :: [package done]
+
+Finished 1 test in 9.819127s. The test was successful.
+
+➜  ecs git:(main) odin test . -o:speed
+[INFO ] --- [2026-03-04 10:38:20] Starting test runner with 1 thread. Set with -define:ODIN_TEST_THREADS=n.
+[INFO ] --- [2026-03-04 10:38:20] The random seed sent to every test is: 172315970706209. Set with -define:ODIN_TEST_RANDOM_SEED=n.
+[INFO ] --- [2026-03-04 10:38:20] Memory tracking is enabled. Tests will log their memory usage if there's an issue.
+[INFO ] --- [2026-03-04 10:38:20] < Final Mem/ Total Mem> <  Peak Mem> (#Free/Alloc) :: [package.test_name]
+[INFO ] --- [2026-03-04 10:38:20] [ecs_test.odin:45:ecs_stress_test()] create dur 57.517291ms
+[INFO ] --- [2026-03-04 10:38:23] [ecs_test.odin:56:ecs_stress_test()] avg frame dur 29.721669ms
+ecs  [|                       ]         1 :: [package done]
+
+Finished 1 test in 3.029941s. The test was successful.
+*/
+
 @(test)
 ecs_stress_test :: proc(t: ^testing.T) {
     context.allocator = runtime.heap_allocator()
