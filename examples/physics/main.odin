@@ -52,18 +52,25 @@ main :: proc() {
         render_start := time.tick_now()
         draw_circle_dur: time.Duration
 
+        drawed := 0
         query := ecs.query(w, {Position, Shape})
         for e in query {
             pos := ecs.get(w, e, Position)
-            switch shape in ecs.get(w, e, Shape) {
-            case Circle:
-                draw_circle_one_start := time.tick_now()
-                rl.DrawCircleV(auto_cast pos, shape.radius, shape.color)
-                draw_circle_dur += time.tick_since(draw_circle_one_start)
+            if pos.x > SCREEN_WIDTH/2 - 20 && pos.x < SCREEN_WIDTH/2 + 20 {
+                switch shape in ecs.get(w, e, Shape) {
+                case Circle:
+                    draw_circle_one_start := time.tick_now()
+                    rl.DrawCircleV(auto_cast pos, shape.radius, shape.color)
+                    draw_circle_dur += time.tick_since(draw_circle_one_start)
+                    drawed += 1
+                }
             }
         }
 
-        ecs.log("avg DrawCircleV time:", draw_circle_dur / auto_cast len(query))
+        ecs.log("circles drawen:", drawed)
+        if drawed > 0 {
+            ecs.log("avg DrawCircleV time:", draw_circle_dur / auto_cast drawed)
+        }
         ecs.log("render time:", time.tick_since(render_start))
 
         rl.DrawFPS(10, 10)
@@ -79,6 +86,13 @@ apply_velocity :: proc(w: ^ecs.World) {
         vel := ecs.get(w, entity, Velocity)
 
         pos.xy += Position(vel.xy)
+
+        switch pos.x {
+
+        }
+        if pos.x < 0 || pos.x > SCREEN_WIDTH || pos.y < 0 || pos.y > SCREEN_HEIGHT {
+            ecs.kill(w, entity)
+        }
 
         ecs.set(w, entity, pos)
         ecs.set(w, entity, vel)

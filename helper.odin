@@ -2,10 +2,10 @@ package ecs
 
 import "core:fmt"
 
-DEBUG :: true
+DEBUG :: #config(ECS_DEBUG, false)
 
 log :: proc(args: ..any) {
-    if DEBUG {
+    when DEBUG {
         fmt.println(..args)
     }
 }

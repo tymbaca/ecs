@@ -91,12 +91,15 @@ update :: proc(w: ^World) {
                     log("cache invalidated for:", type_set)
                     delete(cached_result, w.allocator)
                     delete_key(&w.cache, type_set)
+					
                     continue loop
                 }
             }
         }
-        clear(&w.cache_cmp_to_discard)
-        log("cache invalidation: dur", time.tick_since(cache_inv_start))
+
+		if len(w.cache_cmp_to_discard) > 0 {
+			clear(&w.cache_cmp_to_discard)
+		}
 	}
 }
 
@@ -193,6 +196,7 @@ query :: proc(w: ^World, types: []typeid, loc := #caller_location) -> []Entity #
 	return result[:]
 }
 
+// TODO: compact
 
 get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid, loc := #caller_location) -> (T, bool) #optional_ok #no_bounds_check {
     assert(T in w.offsets, "got unknown component type", loc)
