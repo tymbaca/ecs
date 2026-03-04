@@ -155,7 +155,7 @@ reserve :: proc(w: ^World, entity_count: int) {
     }
 }
 
-get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok {
+get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok #no_bounds_check {
     offset, ok := w.offsets[T]
     if !ok {
         return {}, false
@@ -172,7 +172,7 @@ get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok {
 	return cmp.component, cmp.header.set
 }
 
-set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
+set :: proc(w: ^World, entity: Entity, component: $T) -> bool #no_bounds_check {
     offset, ok := w.offsets[T]
     if !ok {
         return false
@@ -195,7 +195,7 @@ set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
 	return true
 }
 
-unset :: proc(w: ^World, entity: Entity, $T: typeid) -> bool {
+unset :: proc(w: ^World, entity: Entity, $T: typeid) -> bool #no_bounds_check {
     offset, ok := w.offsets[T]
     if !ok {
         return false

@@ -8,7 +8,8 @@ import "core:testing"
 
 /*
 
-1. query caching - 50ms -> 30ms, ~40%
+1. query caching - 50ms -> 33ms, ~40%
+2. #no_bounds_check - 33ms -> 24ms, ~30%
 
 */
 
