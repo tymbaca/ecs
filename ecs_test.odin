@@ -116,6 +116,7 @@ ecs_test :: proc(t: ^testing.T) {
 kill_test :: proc(t: ^testing.T) {
 	w: World
 	init(&w, {Position, Velocity}, context.allocator)
+    defer destroy(&w)
 
 	for _ in 0 ..< 10 {
 		e := create(&w)

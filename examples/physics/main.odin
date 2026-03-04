@@ -24,6 +24,7 @@ main :: proc() {
 
     world: ecs.World
     ecs.init(&world, {Position, Velocity, Shape}, allocator)
+    defer ecs.destroy(&world)
     
     ecs.register(&world, apply_velocity)
 

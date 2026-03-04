@@ -61,6 +61,7 @@ destroy :: proc(w: ^World) {
     for _, cached_result in w.cache {
         delete(cached_result, w.allocator)
     }
+    delete(w.freelist)
 	delete(w.cache)
 	delete(w.cache_cmp_to_discard)
     mem.dynamic_arena_destroy(&w.frame_arena)
