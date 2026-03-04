@@ -151,7 +151,7 @@ reserve :: proc(w: ^World, entity_count: int) {
     }
 }
 
-query :: proc(w: ^World, types: []typeid) -> []Entity #no_bounds_check {
+query :: proc(w: ^World, types: []typeid, loc := #caller_location) -> []Entity #no_bounds_check {
     start := time.tick_now()
     defer log("query:", time.tick_since(start), types)
 
@@ -169,7 +169,7 @@ query :: proc(w: ^World, types: []typeid) -> []Entity #no_bounds_check {
 	id := 0
 	outter: for entity in _iterate(w, &id) {
 		for t in types {
-            // assert(t in w.offsets)
+            assert(t in w.offsets, "got unknown component type", loc)
     
 			if !_has(w, entity.id, t) {
 				continue outter
@@ -193,8 +193,8 @@ query :: proc(w: ^World, types: []typeid) -> []Entity #no_bounds_check {
 }
 
 
-get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok #no_bounds_check {
-    assert(T in w.offsets)
+get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid, loc := #caller_location) -> (T, bool) #optional_ok #no_bounds_check {
+    assert(T in w.offsets, "got unknown component type", loc)
     offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
@@ -208,8 +208,8 @@ get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #o
 	return cmp.component, cmp.header.set
 }
 
-set :: #force_inline proc(w: ^World, entity: Entity, component: $T) -> bool #no_bounds_check {
-    assert(T in w.offsets)
+set :: #force_inline proc(w: ^World, entity: Entity, component: $T, loc := #caller_location) -> bool #no_bounds_check {
+    assert(T in w.offsets, "got unknown component type", loc)
     offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
@@ -229,8 +229,8 @@ set :: #force_inline proc(w: ^World, entity: Entity, component: $T) -> bool #no_
 	return true
 }
 
-unset :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> bool #no_bounds_check {
-    assert(T in w.offsets)
+unset :: #force_inline proc(w: ^World, entity: Entity, $T: typeid, loc := #caller_location) -> bool #no_bounds_check {
+    assert(T in w.offsets, "got unknown component type", loc)
     offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])

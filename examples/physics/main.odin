@@ -13,7 +13,7 @@ Shape :: union {
 
 Circle :: struct {
     radius: f32,
-    color:  raylib.Color
+    color:  rl.Color
 }
 
 SCREEN_WIDTH :: 800
@@ -23,7 +23,7 @@ main :: proc() {
     allocator := context.allocator
 
     world: ecs.World
-    ecs.init(&world, {Position, Velocity, Circle}, allocator)
+    ecs.init(&world, {Position, Velocity, Shape}, allocator)
     
     ecs.register(&world, apply_velocity)
 
@@ -31,6 +31,7 @@ main :: proc() {
         e := ecs.create(&world)
         ecs.set(&world, e, Position{10, 2})
         ecs.set(&world, e, Velocity{1, 1.4})
+        ecs.set(&world, e, Circle{})
     }
 
     rl.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "window")
