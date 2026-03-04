@@ -16,6 +16,7 @@ World :: struct {
     cache:                map[Cached_Query_Key][]Entity,
     cache_cmp_to_discard: map[typeid]struct{},
 
+    // those fields can be used
 	frame_arena: mem.Dynamic_Arena,
 	allocator:   runtime.Allocator,
 	userdata:    rawptr,
@@ -109,12 +110,13 @@ kill :: proc(w: ^World, entity: Entity) {
     }
 
 	append(&w.freelist, entity)
+    header.entity.generation += 1
 
     // discard cache
     for typ, offset in w.offsets {
         cmp_header := (^Component_Header)(&w.storage[entity.id * w.stride + offset])
         if cmp_header.set == true {
-            mark_for_cache_discard(w, typ)
+            _mark_for_cache_discard(w, typ)
         }
         cmp_header.set = false
     }
@@ -185,7 +187,7 @@ set :: proc(w: ^World, entity: Entity, component: $T) -> bool {
 
 	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
     if cmp.header.set == false {
-        mark_for_cache_discard(w, T)
+        _mark_for_cache_discard(w, T)
     }
 	cmp.header.set = true
 	cmp.component = component
@@ -208,7 +210,7 @@ unset :: proc(w: ^World, entity: Entity, $T: typeid) -> bool {
 
 	cmp := (^Component(T))(&w.storage[entity.id * w.stride + offset])
     if cmp.header.set == true {
-        mark_for_cache_discard(w, T)
+        _mark_for_cache_discard(w, T)
     }
 	cmp.header.set = false
 
@@ -286,7 +288,7 @@ _has :: proc(w: ^World, entity_id: int, T: typeid) -> bool {
 }
 
 @(private)
-mark_for_cache_discard :: proc(w: ^World, t: typeid) {
+_mark_for_cache_discard :: proc(w: ^World, t: typeid) {
     w.cache_cmp_to_discard[t] = {}
 }
 
@@ -304,4 +306,9 @@ Component_Header :: struct {
 Component :: struct($T: typeid) {
 	header:    Component_Header,
 	component: T,
+}
+
+@(private)
+_get_block_header_ptr :: proc(w: ^World, id: int) -> ^Block_Header {
+	return (^Block_Header)(&w.storage[id * w.stride])
 }

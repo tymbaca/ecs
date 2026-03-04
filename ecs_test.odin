@@ -73,6 +73,42 @@ ecs_test :: proc(t: ^testing.T) {
 }
 
 @(test)
+kill_test :: proc(t: ^testing.T) {
+	w: World
+	init(&w, {Position, Velocity}, context.allocator)
+
+	for _ in 0 ..< 10 {
+		e := create(&w)
+		set(&w, e, Position{0, 0})
+		set(&w, e, Velocity{1, 1})
+	}
+
+    testing.expect(t, w.next_id == 10)
+    testing.expect(t, _get_block_header_ptr(&w, 2).entity.generation == 0)
+    testing.expect(t, len(w.freelist) == 0)
+
+    kill(&w, {id = 2, generation = 0})
+
+    testing.expect(t, w.next_id == 10)
+    testing.expect(t, len(w.freelist) == 1)
+    testing.expect(t, w.freelist[0].id == 2)
+    testing.expect(t, _get_block_header_ptr(&w, 2).entity.generation == 1)
+
+    e2 := create(&w)
+
+    testing.expect(t, w.next_id == 10)
+    testing.expect(t, len(w.freelist) == 0)
+
+    _, pos_ok := get(&w, e2, Position)
+    _, vel_ok := get(&w, e2, Velocity)
+    testing.expect(t, pos_ok == false)
+    testing.expect(t, vel_ok == false)
+
+    e10 := create(&w)
+    testing.expect(t, w.next_id == 11)
+}
+
+@(test)
 ecs_stress_test :: proc(t: ^testing.T) {
 	allocator := context.allocator
 
@@ -112,6 +148,16 @@ ecs_stress_test :: proc(t: ^testing.T) {
     log.info("avg frame dur", avg_frame_dur)
 
     log.info("total size", len(world.storage), "cap", cap(world.storage))
+
+	for id in 0 ..< N1 {
+		kill(w, {id = id, generation = 9999999})
+	}
+
+	for _ in 0 ..< N1 {
+		_ = create(w)
+	}
+
+    testing.expect_value(t, w.next_id, N1)
 }
 
 apply_velocity :: proc(w: ^World) {

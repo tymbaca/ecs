@@ -2,7 +2,7 @@ package ecs
 
 import "core:fmt"
 
-DEBUG :: true
+DEBUG :: false
 
 log :: proc(args: ..any) {
     if DEBUG {
