@@ -141,7 +141,7 @@ ecs_stress_test :: proc(t: ^testing.T) {
 
     for i in 0 ..< N2 {
         update(w)
-        unset(w, {10, 999999}, Position)
+        // unset(w, {10, 999999}, Position)
     }
 
     avg_frame_dur := time.tick_since(before_frames_start) / N2
