@@ -137,14 +137,14 @@ ecs_stress_test :: proc(t: ^testing.T) {
     log.info("create dur", time.tick_since(start))
 
     N2 :: 100
-    frame_durs: [N2]time.Duration
+    before_frames_start := time.tick_now()
 
     for i in 0 ..< N2 {
         update(w)
         unset(w, {10, 999999}, Position)
     }
 
-    avg_frame_dur := math.sum(frame_durs[:]) / N2
+    avg_frame_dur := time.tick_since(before_frames_start) / N2
     log.info("avg frame dur", avg_frame_dur)
 
     log.info("total size", len(world.storage), "cap", cap(world.storage))

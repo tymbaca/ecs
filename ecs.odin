@@ -21,8 +21,8 @@ World :: struct {
 	allocator:   runtime.Allocator,
 	userdata:    rawptr,
 	// TODO:
-	prev_fram: time.Tick
-    delta_time: time.Duration
+	// prev_fram: time.Tick
+	//     delta_time: time.Duration
 }
 
 Entity :: struct {
@@ -71,10 +71,10 @@ register :: proc(w: ^World, system: System) {
 }
 
 update :: proc(w: ^World) {
-    frame_start := time.tick_now()
-    defer {
-        w.delta_time = time.tick_since(frame_start)
-    }
+    // frame_start := time.tick_now()
+    // defer {
+    //     w.delta_time = time.tick_since(frame_start)
+    // }
 
 	for system in w.systems {
 		mem.dynamic_arena_reset(&w.frame_arena)
