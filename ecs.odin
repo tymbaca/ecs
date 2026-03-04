@@ -21,7 +21,8 @@ World :: struct {
 	allocator:   runtime.Allocator,
 	userdata:    rawptr,
 	// TODO:
-	// delta_time:  time.Duration,
+	prev_fram: time.Tick
+    delta_time: time.Duration
 }
 
 Entity :: struct {
@@ -65,7 +66,16 @@ destroy :: proc(w: ^World) {
     mem.dynamic_arena_destroy(&w.frame_arena)
 }
 
+register :: proc(w: ^World, system: System) {
+	append(&w.systems, system)
+}
+
 update :: proc(w: ^World) {
+    frame_start := time.tick_now()
+    defer {
+        w.delta_time = time.tick_since(frame_start)
+    }
+
 	for system in w.systems {
 		mem.dynamic_arena_reset(&w.frame_arena)
 
@@ -87,29 +97,6 @@ update :: proc(w: ^World) {
         clear(&w.cache_cmp_to_discard)
         log("cache invalidation: dur", time.tick_since(cache_inv_start))
 	}
-}
-
-register :: proc(w: ^World, system: System) {
-	append(&w.systems, system)
-}
-
-kill :: proc(w: ^World, entity: Entity) {
-    header := (^Block_Header)(&w.storage[entity.id * w.stride])
-    if entity.generation < header.entity.generation { // already killed
-        return
-    }
-
-	append(&w.freelist, entity)
-    header.entity.generation += 1
-
-    // discard cache
-    for typ, offset in w.offsets {
-        cmp_header := (^Component_Header)(&w.storage[entity.id * w.stride + offset])
-        if cmp_header.set == true {
-            _mark_for_cache_discard(w, typ)
-        }
-        cmp_header.set = false
-    }
 }
 
 create :: proc(w: ^World) -> Entity {
@@ -139,11 +126,70 @@ create :: proc(w: ^World) -> Entity {
 	return entity
 }
 
+kill :: proc(w: ^World, entity: Entity) {
+    header := (^Block_Header)(&w.storage[entity.id * w.stride])
+    if entity.generation < header.entity.generation { // already killed
+        return
+    }
+
+	append(&w.freelist, entity)
+    header.entity.generation += 1
+
+    // discard cache
+    for typ, offset in w.offsets {
+        cmp_header := (^Component_Header)(&w.storage[entity.id * w.stride + offset])
+        if cmp_header.set == true {
+            _mark_for_cache_discard(w, typ)
+        }
+        cmp_header.set = false
+    }
+}
+
 reserve :: proc(w: ^World, entity_count: int) {
     if cap(w.storage) < (entity_count * w.stride) {
         resize(&w.storage, entity_count * w.stride)
     }
 }
+
+query :: proc(w: ^World, types: []typeid) -> []Entity #no_bounds_check {
+    start := time.tick_now()
+    defer log("query:", time.tick_since(start), types)
+
+    if len(types) <= CACHED_QUERY_KEY_SIZE {
+        key := to_cached_query_key(types)
+        result, ok := w.cache[key]
+        if ok {
+            log("query: found cached, len:", len(result))
+            return result
+        }
+    }
+
+	result := make([dynamic]Entity, mem.dynamic_arena_allocator(&w.frame_arena))
+
+	id := 0
+	outter: for entity in _iterate(w, &id) {
+		for t in types {
+			if !_has(w, entity.id, t) {
+				continue outter
+			}
+		}
+
+		append(&result, entity)
+	}
+
+    if len(types) <= CACHED_QUERY_KEY_SIZE {
+        key := to_cached_query_key(types)
+
+        cached_result := make([]Entity, len(result), w.allocator)
+        copy(cached_result, result[:])
+        w.cache[key] = cached_result
+
+        return cached_result
+    }
+
+	return result[:]
+}
+
 
 get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok #no_bounds_check {
     offset, ok := w.offsets[T]
@@ -206,46 +252,6 @@ unset :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> bool #no_b
 
 	return true
 }
-
-query :: proc(w: ^World, types: []typeid) -> []Entity #no_bounds_check {
-    start := time.tick_now()
-    defer log("query:", time.tick_since(start), types)
-
-    if len(types) <= CACHED_QUERY_KEY_SIZE {
-        key := to_cached_query_key(types)
-        result, ok := w.cache[key]
-        if ok {
-            log("query: found cached, len:", len(result))
-            return result
-        }
-    }
-
-	result := make([dynamic]Entity, mem.dynamic_arena_allocator(&w.frame_arena))
-
-	id := 0
-	outter: for entity in _iterate(w, &id) {
-		for t in types {
-			if !_has(w, entity.id, t) {
-				continue outter
-			}
-		}
-
-		append(&result, entity)
-	}
-
-    if len(types) <= CACHED_QUERY_KEY_SIZE {
-        key := to_cached_query_key(types)
-
-        cached_result := make([]Entity, len(result), w.allocator)
-        copy(cached_result, result[:])
-        w.cache[key] = cached_result
-
-        return cached_result
-    }
-
-	return result[:]
-}
-
 
 @(private)
 CACHED_QUERY_KEY_SIZE :: 32

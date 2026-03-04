@@ -140,10 +140,8 @@ ecs_stress_test :: proc(t: ^testing.T) {
     frame_durs: [N2]time.Duration
 
     for i in 0 ..< N2 {
-        frame_start := time.tick_now()
         update(w)
         unset(w, {10, 999999}, Position)
-        frame_durs[i] = time.tick_since(frame_start)
     }
 
     avg_frame_dur := math.sum(frame_durs[:]) / N2
