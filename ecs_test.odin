@@ -10,7 +10,45 @@ import "core:testing"
 1. query caching - 50ms -> 33ms, ~40%
 2. #no_bounds_check - 33ms -> 24ms, ~30%
 3. -o:speed - ~3.5ms
-4. #force_inline - ~1.5ms
+4. #force_inline - ~2.1ms
+5. -disable-assert - ~1.9ms
+
+[INFO ] --- [2026-03-04 12:30:49] Starting test runner with 3 threads. Set with -define:ODIN_TEST_THREADS=n.
+[INFO ] --- [2026-03-04 12:30:49] The random seed sent to every test is: 179064550909070. Set with -define:ODIN_TEST_RANDOM_SEED=n.
+[INFO ] --- [2026-03-04 12:30:49] Memory tracking is enabled. Tests will log their memory usage if there's an issue.
+[INFO ] --- [2026-03-04 12:30:49] < Final Mem/ Total Mem> <  Peak Mem> (#Free/Alloc) :: [package.test_name]
+[WARN ] --- [2026-03-04 12:30:49] <   1.31KiB/   4.75KiB> <   1.31KiB> (   10/   14) :: ecs.kill_test
+        +++ leak       192B @ 0x579800200 [ecs.odin:275:_mark_for_cache_discard()]
+        +++ leak       320B @ 0x579800040 [ecs.odin:46:init()]
+        +++ leak       128B @ 0x579800550 [ecs.odin:135:kill()]
+        +++ leak       704B @ 0x5798005D8 [ecs.odin:114:create()]
+[INFO ] --- [2026-03-04 12:30:49] [ecs_test.odin:137:ecs_stress_test()] create dur 40.04675ms
+[INFO ] --- [2026-03-04 12:30:50] [ecs_test.odin:148:ecs_stress_test()] avg frame dur 18.421294ms
+[INFO ] --- [2026-03-04 12:30:50] [ecs_test.odin:150:ecs_stress_test()] total size 9600000 cap 9600000
+[WARN ] --- [2026-03-04 12:30:50] <   2.00MiB/  29.77MiB> <  16.26MiB> (   52/   53) :: ecs.ecs_stress_test
+        +++ leak    2.00MiB @ 0x57BD86A40 [ecs.odin:135:kill()]
+ecs  [|||                     ]         3 :: [package done]
+
+Finished 3 tests in 1.89713s. All tests were successful.
+
+➜  ecs git:(main) ✗ odin test . -o:speed -disable-assert
+[INFO ] --- [2026-03-04 12:31:00] Starting test runner with 3 threads. Set with -define:ODIN_TEST_THREADS=n.
+[INFO ] --- [2026-03-04 12:31:00] The random seed sent to every test is: 179075684130090. Set with -define:ODIN_TEST_RANDOM_SEED=n.
+[INFO ] --- [2026-03-04 12:31:00] Memory tracking is enabled. Tests will log their memory usage if there's an issue.
+[INFO ] --- [2026-03-04 12:31:00] < Final Mem/ Total Mem> <  Peak Mem> (#Free/Alloc) :: [package.test_name]
+[WARN ] --- [2026-03-04 12:31:00] <   1.31KiB/   4.75KiB> <   1.31KiB> (   10/   14) :: ecs.kill_test
+        +++ leak       128B @ 0x6E1800550 [ecs.odin:135:kill()]
+        +++ leak       704B @ 0x6E18005D8 [ecs.odin:114:create()]
+        +++ leak       192B @ 0x6E1800200 [ecs.odin:275:_mark_for_cache_discard()]
+        +++ leak       320B @ 0x6E1800040 [ecs.odin:46:init()]
+[INFO ] --- [2026-03-04 12:31:00] [ecs_test.odin:137:ecs_stress_test()] create dur 11.092792ms
+[INFO ] --- [2026-03-04 12:31:00] [ecs_test.odin:148:ecs_stress_test()] avg frame dur 1.872842ms
+[INFO ] --- [2026-03-04 12:31:00] [ecs_test.odin:150:ecs_stress_test()] total size 9600000 cap 9600000
+[WARN ] --- [2026-03-04 12:31:00] <   2.00MiB/  29.77MiB> <  16.26MiB> (   52/   53) :: ecs.ecs_stress_test
+        +++ leak    2.00MiB @ 0x6E3D86A40 [ecs.odin:135:kill()]
+ecs  [|||                     ]         3 :: [package done]
+
+Finished 3 tests in 200.879ms. All tests were successful.
 
 */
 

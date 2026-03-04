@@ -169,6 +169,8 @@ query :: proc(w: ^World, types: []typeid) -> []Entity #no_bounds_check {
 	id := 0
 	outter: for entity in _iterate(w, &id) {
 		for t in types {
+            // assert(t in w.offsets)
+    
 			if !_has(w, entity.id, t) {
 				continue outter
 			}
@@ -192,10 +194,8 @@ query :: proc(w: ^World, types: []typeid) -> []Entity #no_bounds_check {
 
 
 get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok #no_bounds_check {
-    offset, ok := w.offsets[T]
-    if !ok {
-        return {}, false
-    }
+    assert(T in w.offsets)
+    offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
 	assert(header.entity.id == entity.id)
@@ -209,10 +209,8 @@ get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #o
 }
 
 set :: #force_inline proc(w: ^World, entity: Entity, component: $T) -> bool #no_bounds_check {
-    offset, ok := w.offsets[T]
-    if !ok {
-        return false
-    }
+    assert(T in w.offsets)
+    offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
 	assert(header.entity.id == entity.id)
@@ -232,10 +230,8 @@ set :: #force_inline proc(w: ^World, entity: Entity, component: $T) -> bool #no_
 }
 
 unset :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> bool #no_bounds_check {
-    offset, ok := w.offsets[T]
-    if !ok {
-        return false
-    }
+    assert(T in w.offsets)
+    offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
 	assert(header.entity.id == entity.id)
