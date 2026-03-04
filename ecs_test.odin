@@ -1,17 +1,18 @@
 #+private
 package ecs
 
-import "base:runtime"
 import "core:math"
 import "core:time"
 import "core:log"
 import "core:testing"
 
-Component :: union {
-    Position,
-    Velocity,
-    Gravity,
-}
+/*
+1. query caching - 50ms -> 33ms, ~40%
+2. #no_bounds_check - 33ms -> 24ms, ~30%
+3. -o:speed - ~3.5ms
+4. #force_inline - ~1.5ms
+
+*/
 
 Position :: distinct [2]f64
 Velocity :: distinct [2]f64
@@ -20,50 +21,117 @@ Gravity :: struct {
 	force:   [2]f64,
 }
 
-/*
-➜  ecs git:(main) odin test .
-[INFO ] --- [2026-03-04 10:37:59] Starting test runner with 1 thread. Set with -define:ODIN_TEST_THREADS=n.
-[INFO ] --- [2026-03-04 10:37:59] The random seed sent to every test is: 172294833546361. Set with -define:ODIN_TEST_RANDOM_SEED=n.
-[INFO ] --- [2026-03-04 10:37:59] Memory tracking is enabled. Tests will log their memory usage if there's an issue.
-[INFO ] --- [2026-03-04 10:37:59] < Final Mem/ Total Mem> <  Peak Mem> (#Free/Alloc) :: [package.test_name]
-[INFO ] --- [2026-03-04 10:37:59] [ecs_test.odin:45:ecs_stress_test()] create dur 224.314ms
-[INFO ] --- [2026-03-04 10:38:09] [ecs_test.odin:56:ecs_stress_test()] avg frame dur 95.945228ms
-ecs  [|                       ]         1 :: [package done]
+@(test)
+ecs_test :: proc(t: ^testing.T) {
+	allocator := context.allocator
 
-Finished 1 test in 9.819127s. The test was successful.
+	world: World
+	init(&world, {Position, Velocity, Gravity}, allocator)
+	defer destroy(&world)
 
-➜  ecs git:(main) odin test . -o:speed
-[INFO ] --- [2026-03-04 10:38:20] Starting test runner with 1 thread. Set with -define:ODIN_TEST_THREADS=n.
-[INFO ] --- [2026-03-04 10:38:20] The random seed sent to every test is: 172315970706209. Set with -define:ODIN_TEST_RANDOM_SEED=n.
-[INFO ] --- [2026-03-04 10:38:20] Memory tracking is enabled. Tests will log their memory usage if there's an issue.
-[INFO ] --- [2026-03-04 10:38:20] < Final Mem/ Total Mem> <  Peak Mem> (#Free/Alloc) :: [package.test_name]
-[INFO ] --- [2026-03-04 10:38:20] [ecs_test.odin:45:ecs_stress_test()] create dur 57.517291ms
-[INFO ] --- [2026-03-04 10:38:23] [ecs_test.odin:56:ecs_stress_test()] avg frame dur 29.721669ms
-ecs  [|                       ]         1 :: [package done]
+	w := &world
 
-Finished 1 test in 3.029941s. The test was successful.
-*/
+	register(&world, apply_velocity)
+	register(&world, apply_gravity)
+
+	e := create(w)
+	set(w, e, Position{0, 0})
+	set(w, e, Velocity{1, 1})
+	set(w, e, Gravity{true, {0, -1}})
+
+	e2 := create(w)
+	set(w, e2, Position{11, 11})
+
+	testing.expect(t, get(w, e, Position) == {0, 0})
+	testing.expect(t, get(w, e, Velocity) == {1, 1})
+	testing.expect(t, get(w, e, Gravity) == {true, {0, -1}})
+
+	update(w)
+
+	testing.expect(t, get(w, e, Position) == {1, 1})
+	testing.expect(t, get(w, e, Velocity) == {1, 0})
+	testing.expect(t, get(w, e, Gravity) == {true, {0, -1}})
+
+	update(w)
+
+	testing.expect(t, get(w, e, Position) == {2, 1})
+	testing.expect(t, get(w, e, Velocity) == {1, -1})
+	testing.expect(t, get(w, e, Gravity) == {true, {0, -1}})
+
+	update(w)
+
+	testing.expect(t, get(w, e, Position) == {3, 0})
+	testing.expect(t, get(w, e, Velocity) == {1, -2})
+	testing.expect(t, get(w, e, Gravity) == {true, {0, -1}})
+
+	pos2, ok := get(w, e2, Position)
+	testing.expect(t, ok)
+	testing.expect(t, pos2 == {11, 11})
+
+	_, ok = get(w, e2, Velocity)
+	testing.expect(t, !ok)
+	_, ok = get(w, e2, Gravity)
+	testing.expect(t, !ok)
+}
+
+@(test)
+kill_test :: proc(t: ^testing.T) {
+	w: World
+	init(&w, {Position, Velocity}, context.allocator)
+
+	for _ in 0 ..< 10 {
+		e := create(&w)
+		set(&w, e, Position{0, 0})
+		set(&w, e, Velocity{1, 1})
+	}
+
+    testing.expect(t, w.next_id == 10)
+    testing.expect(t, _get_block_header_ptr(&w, 2).entity.generation == 0)
+    testing.expect(t, len(w.freelist) == 0)
+
+    kill(&w, {id = 2, generation = 0})
+
+    testing.expect(t, w.next_id == 10)
+    testing.expect(t, len(w.freelist) == 1)
+    testing.expect(t, w.freelist[0].id == 2)
+    testing.expect(t, _get_block_header_ptr(&w, 2).entity.generation == 1)
+
+    e2 := create(&w)
+
+    testing.expect(t, w.next_id == 10)
+    testing.expect(t, len(w.freelist) == 0)
+
+    _, pos_ok := get(&w, e2, Position)
+    _, vel_ok := get(&w, e2, Velocity)
+    testing.expect(t, pos_ok == false)
+    testing.expect(t, vel_ok == false)
+
+    e10 := create(&w)
+    testing.expect(t, w.next_id == 11)
+}
 
 @(test)
 ecs_stress_test :: proc(t: ^testing.T) {
-    context.allocator = runtime.heap_allocator()
+	allocator := context.allocator
 
-	world := new_world(Component)
-	register_systems(&world, apply_velocity, apply_gravity)
+	world: World
+	init(&world, {Position, Velocity, Gravity}, allocator)
+	defer destroy(&world)
 
 	w := &world
+
+	register(&world, apply_velocity)
+	register(&world, apply_gravity)
 
     start := time.tick_now()
 
     N1 :: 100_000
-    // reserve(w, N1)
+    reserve(w, N1)
 	for _ in 0 ..< N1 {
-		e := create_entity(w, 
-            Position{0, 0},
-            Velocity{1, 1},
-            Gravity{true, {0, -1}},
-        )
-        _ = e
+		e := create(w)
+		set(w, e, Position{0, 0})
+		set(w, e, Velocity{1, 1})
+		set(w, e, Gravity{true, {0, -1}})
 	}
 
     log.info("create dur", time.tick_since(start))
@@ -79,43 +147,39 @@ ecs_stress_test :: proc(t: ^testing.T) {
     avg_frame_dur := time.tick_since(before_frames_start) / N2
     log.info("avg frame dur", avg_frame_dur)
 
-    // log.info("total size", len(world.storage), "cap", cap(world.storage))
+    log.info("total size", len(world.storage), "cap", cap(world.storage))
 
-	// for id in 0 ..< N1 {
-	// 	kill(w, {id = id, generation = 9999999})
-	// }
-	//
-	// for _ in 0 ..< N1 {
-	// 	_ = create(w)
-	// }
+	for id in 0 ..< N1 {
+		kill(w, {id = id, generation = 9999999})
+	}
 
-    // testing.expect_value(t, w.next_id, N1)
+	for _ in 0 ..< N1 {
+		_ = create(w)
+	}
+
+    testing.expect_value(t, w.next_id, N1)
 }
 
-apply_velocity :: proc(w: ^World(Component)) {
-	for &e in w.entities {
-		if has_components(e, Velocity, Position) {
-			vel := must_get_component(w^, e.id, Velocity)
-			pos := must_get_component(w^, e.id, Position)
+apply_velocity :: proc(w: ^World) {
+	for entity in query(w, {Position, Velocity}) {
+		pos := get(w, entity, Position)
+		vel := get(w, entity, Velocity)
 
-			pos += Position(vel)
+		pos += Position(vel)
 
-			set_component(w, &e, pos)
-		}
+		set(w, entity, pos)
 	}
 }
 
-apply_gravity :: proc(w: ^World(Component)) {
-	for &e in w.entities {
-		if has_components(e, Velocity, Gravity) {
-			grav := must_get_component(w^, e.id, Gravity)
-			vel := must_get_component(w^, e.id, Velocity)
+apply_gravity :: proc(w: ^World) {
+	for entity in query(w, {Gravity, Velocity}) {
+		grav := get(w, entity, Gravity)
+		vel := get(w, entity, Velocity)
 
-            if grav.enabled {
-                vel += Velocity(grav.force)
-            }
-
-			set_component(w, &e, vel)
+		if grav.enabled {
+			vel += Velocity(grav.force)
 		}
+
+		set(w, entity, vel)
 	}
 }
