@@ -9,8 +9,8 @@ import "core:testing"
 /*
 1. query caching - 50ms -> 33ms, ~40%
 2. #no_bounds_check - 33ms -> 24ms, ~30%
-
-with -o:speed we get ~3.5ms per frame
+3. -o:speed - ~3.5ms
+4. #force_inline - ~1.5ms
 
 */
 

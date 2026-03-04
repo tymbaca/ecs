@@ -24,22 +24,12 @@ World :: struct {
 	// delta_time:  time.Duration,
 }
 
-@(private)
-CACHED_QUERY_KEY_SIZE :: 32
-@(private)
-Cached_Query_Key :: [CACHED_QUERY_KEY_SIZE]typeid
-
 Entity :: struct {
 	id:         int,
 	generation: int,
 }
 
 System :: #type proc(w: ^World)
-
-// TODO:
-Hint :: struct {
-    
-}
 
 init :: proc(w: ^World, types: []typeid, allocator: runtime.Allocator) {
 	w.offsets = make(map[typeid]int, allocator)
@@ -99,7 +89,7 @@ update :: proc(w: ^World) {
 	}
 }
 
-register :: proc(w: ^World, system: System, hint: Maybe(Hint) = nil) {
+register :: proc(w: ^World, system: System) {
 	append(&w.systems, system)
 }
 
@@ -155,7 +145,7 @@ reserve :: proc(w: ^World, entity_count: int) {
     }
 }
 
-get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok #no_bounds_check {
+get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok #no_bounds_check {
     offset, ok := w.offsets[T]
     if !ok {
         return {}, false
@@ -172,7 +162,7 @@ get :: proc(w: ^World, entity: Entity, $T: typeid) -> (T, bool) #optional_ok #no
 	return cmp.component, cmp.header.set
 }
 
-set :: proc(w: ^World, entity: Entity, component: $T) -> bool #no_bounds_check {
+set :: #force_inline proc(w: ^World, entity: Entity, component: $T) -> bool #no_bounds_check {
     offset, ok := w.offsets[T]
     if !ok {
         return false
@@ -195,7 +185,7 @@ set :: proc(w: ^World, entity: Entity, component: $T) -> bool #no_bounds_check {
 	return true
 }
 
-unset :: proc(w: ^World, entity: Entity, $T: typeid) -> bool #no_bounds_check {
+unset :: #force_inline proc(w: ^World, entity: Entity, $T: typeid) -> bool #no_bounds_check {
     offset, ok := w.offsets[T]
     if !ok {
         return false
@@ -217,15 +207,11 @@ unset :: proc(w: ^World, entity: Entity, $T: typeid) -> bool #no_bounds_check {
 	return true
 }
 
-Query_Hint :: struct {
-    disable_cache: bool,
-}
-
-query :: proc(w: ^World, types: []typeid, hint := Query_Hint{}) -> []Entity {
+query :: proc(w: ^World, types: []typeid) -> []Entity #no_bounds_check {
     start := time.tick_now()
     defer log("query:", time.tick_since(start), types)
 
-    if !hint.disable_cache && len(types) <= CACHED_QUERY_KEY_SIZE {
+    if len(types) <= CACHED_QUERY_KEY_SIZE {
         key := to_cached_query_key(types)
         result, ok := w.cache[key]
         if ok {
@@ -247,7 +233,7 @@ query :: proc(w: ^World, types: []typeid, hint := Query_Hint{}) -> []Entity {
 		append(&result, entity)
 	}
 
-    if !hint.disable_cache && len(types) <= CACHED_QUERY_KEY_SIZE {
+    if len(types) <= CACHED_QUERY_KEY_SIZE {
         key := to_cached_query_key(types)
 
         cached_result := make([]Entity, len(result), w.allocator)
@@ -258,6 +244,33 @@ query :: proc(w: ^World, types: []typeid, hint := Query_Hint{}) -> []Entity {
     }
 
 	return result[:]
+}
+
+
+@(private)
+CACHED_QUERY_KEY_SIZE :: 32
+@(private)
+Cached_Query_Key :: [CACHED_QUERY_KEY_SIZE]typeid
+
+@(private)
+Block_Header :: struct {
+	entity: Entity,
+}
+
+@(private)
+Component_Header :: struct {
+	set: bool,
+}
+
+@(private)
+Component :: struct($T: typeid) {
+	header:    Component_Header,
+	component: T,
+}
+
+@(private)
+_mark_for_cache_discard :: proc(w: ^World, t: typeid) {
+    w.cache_cmp_to_discard[t] = {}
 }
 
 @(private)
@@ -285,27 +298,6 @@ _iterate :: proc(w: ^World, id: ^int) -> (Entity, bool) {
 _has :: proc(w: ^World, entity_id: int, T: typeid) -> bool {
 	cmp_header := (^Component_Header)(&w.storage[entity_id * w.stride + w.offsets[T]])
 	return cmp_header.set
-}
-
-@(private)
-_mark_for_cache_discard :: proc(w: ^World, t: typeid) {
-    w.cache_cmp_to_discard[t] = {}
-}
-
-@(private)
-Block_Header :: struct {
-	entity: Entity,
-}
-
-@(private)
-Component_Header :: struct {
-	set: bool,
-}
-
-@(private)
-Component :: struct($T: typeid) {
-	header:    Component_Header,
-	component: T,
 }
 
 @(private)
