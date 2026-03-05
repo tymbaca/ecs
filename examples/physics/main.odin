@@ -41,7 +41,7 @@ main :: proc() {
     for _ in 0..<100 {
         e := ecs.create(w)
         ecs.set(w, e, Position{SCREEN_WIDTH/2, SCREEN_HEIGHT/2})
-        ecs.set(w, e, Velocity{rand_f32()*5, rand_f32()*5})
+        ecs.set(w, e, Velocity{rand_f32(), rand_f32()})
         ecs.set(w, e, Shape(Bunny{
             radius = 20,
             color = rl.ORANGE,
@@ -84,7 +84,7 @@ main :: proc() {
         rl.DrawRectangle(0, 0, SCREEN_WIDTH, 40, rl.BLACK);
         rl.DrawFPS(10, 10)
         rl.DrawText(rl.TextFormat("bunnies: %i", w.next_id), 120, 10, 20, rl.GREEN);
-        rl.DrawText(fmt.caprintf("frame time: %s", w.delta, allocator=mem.dynamic_arena_allocator(&w.frame_arena)), 320, 10, 20, rl.GREEN);
+        rl.DrawText(fmt.caprintf("frame time: %s", w.delta_dur, allocator=mem.dynamic_arena_allocator(&w.frame_arena)), 320, 10, 20, rl.GREEN);
 
 
         rl.EndDrawing()
@@ -97,7 +97,7 @@ apply_velocity :: proc(w: ^ecs.World) {
         pos := ecs.get(w, entity, Position)
         vel := ecs.get(w, entity, Velocity)
 
-        pos.xy += Position(vel.xy)
+        pos.xy += Position(vel.xy) * w.delta
         if (pos.x < 0 && vel.x < 0) || (pos.x > SCREEN_WIDTH && vel.x > 0) {
             vel.x = -vel.x
         }
@@ -115,7 +115,7 @@ spawn_system :: proc(w: ^ecs.World) {
         for _ in 0..<100 {
             e := ecs.create(w)
             ecs.set(w, e, Position(rl.GetMousePosition()))
-            ecs.set(w, e, Velocity{rand_f32()*5, rand_f32()*5})
+            ecs.set(w, e, Velocity{rand_f32(), rand_f32()})
             ecs.set(w, e, Shape(Bunny{
                 radius = 20,
                 color = choose([]rl.Color{rl.ORANGE, rl.WHITE, rl.YELLOW, rl.GREEN, rl.BLUE, rl.RED, rl.PURPLE, rl.BLACK, rl.PINK}),
@@ -133,7 +133,7 @@ delete_system :: proc(w: ^ecs.World) {
 }
 
 rand_f32 :: proc() -> f32 {
-    return rand.float32() * 2 - 1
+    return rand.float32_range(-0.3, 0.3)
 }
 
 choose :: proc(s: $T/[]$E) -> E {

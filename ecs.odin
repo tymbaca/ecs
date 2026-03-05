@@ -19,8 +19,8 @@ World :: struct {
 
     // those fields can be used
 	userdata:    rawptr,
-    delta:       time.Duration,
-    delta_ms:    f32,
+    delta:       f32,
+    delta_dur:   time.Duration,
 	frame_arena: mem.Dynamic_Arena,
 	allocator:   runtime.Allocator,
 }
@@ -74,10 +74,10 @@ register :: proc(w: ^World, system: System) {
 update :: proc(w: ^World) {
     if w.prev_frame != {} {
         now := time.tick_now()
-        w.delta = time.tick_diff(w.prev_frame, now)
-        w.delta_ms = f32(time.duration_milliseconds(w.delta))
+        w.delta_dur = time.tick_diff(w.prev_frame, now)
+        w.delta = f32(time.duration_milliseconds(w.delta_dur))
         w.prev_frame = now
-        log("frame time:", w.delta)
+        log("frame time:", w.delta_dur)
     } else {
         w.prev_frame = time.tick_now()
     }
