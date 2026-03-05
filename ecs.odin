@@ -84,20 +84,20 @@ update :: proc(w: ^World) {
 		system(w)
         log("system: dur", time.tick_since(system_start))
 
-        cache_inv_start := time.tick_now()
-        loop: for type_set, cached_result in w.cache {
-            for cached_type in type_set {
-                if cached_type in w.cache_cmp_to_discard {
-                    log("cache invalidated for:", type_set)
-                    delete(cached_result, w.allocator)
-                    delete_key(&w.cache, type_set)
-					
-                    continue loop
+		if len(w.cache_cmp_to_discard) > 0 {
+            cache_inv_start := time.tick_now()
+            loop: for type_set, cached_result in w.cache {
+                for cached_type in type_set {
+                    if cached_type in w.cache_cmp_to_discard {
+                        log("cache invalidated for:", type_set)
+                        delete(cached_result, w.allocator)
+                        delete_key(&w.cache, type_set)
+                        
+                        continue loop
+                    }
                 }
             }
-        }
 
-		if len(w.cache_cmp_to_discard) > 0 {
 			clear(&w.cache_cmp_to_discard)
 		}
 	}
@@ -105,12 +105,10 @@ update :: proc(w: ^World) {
 
 create :: proc(w: ^World) -> Entity {
 	if len(w.freelist) > 0 {
-		entity := pop(&w.freelist)
-
+		entity := pop(&w.freelist) // this still has old generation
 		header := (^Block_Header)(&w.storage[entity.id * w.stride])
-		header.entity.id = entity.id
 
-		return entity
+		return header.entity
 	}
 
 	// resize if needed
@@ -155,11 +153,12 @@ reserve :: proc(w: ^World, entity_count: int) {
     }
 }
 
+// query entities that have components from `types`. If `len(types) == 0`, then all entities will be returned.
 query :: proc(w: ^World, types: []typeid, loc := #caller_location) -> []Entity #no_bounds_check {
     start := time.tick_now()
     defer log("query:", time.tick_since(start), types)
 
-    if len(types) <= CACHED_QUERY_KEY_SIZE {
+    if len(types) > 0 && len(types) <= CACHED_QUERY_KEY_SIZE {
         key := to_cached_query_key(types)
         result, ok := w.cache[key]
         if ok {
@@ -172,6 +171,11 @@ query :: proc(w: ^World, types: []typeid, loc := #caller_location) -> []Entity #
 
 	id := 0
 	outter: for entity in _iterate(w, &id) {
+        if len(types) == 0 {
+            append(&result, entity)
+            continue
+        }
+
 		for t in types {
             assert(t in w.offsets, "got unknown component type", loc)
     
@@ -183,7 +187,7 @@ query :: proc(w: ^World, types: []typeid, loc := #caller_location) -> []Entity #
 		append(&result, entity)
 	}
 
-    if len(types) <= CACHED_QUERY_KEY_SIZE {
+    if len(types) > 0 && len(types) <= CACHED_QUERY_KEY_SIZE {
         key := to_cached_query_key(types)
 
         cached_result := make([]Entity, len(result), w.allocator)

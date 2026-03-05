@@ -134,9 +134,12 @@ kill_test :: proc(t: ^testing.T) {
     testing.expect(t, len(w.freelist) == 1)
     testing.expect(t, w.freelist[0].id == 2)
     testing.expect(t, _get_block_header_ptr(&w, 2).entity.generation == 1)
+    _, ok := get(&w, {id = 2, generation = 0}, Velocity)
+    testing.expect(t, ok == false) // unset
 
     e2 := create(&w)
 
+    testing.expect(t, e2.generation == 1) // got incremented
     testing.expect(t, w.next_id == 10)
     testing.expect(t, len(w.freelist) == 0)
 
