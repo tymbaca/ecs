@@ -12,17 +12,17 @@ World :: struct {
 	freelist:    [dynamic]Entity,
 	systems:     [dynamic]System,
 	next_id:     int,
+	prev_frame:  time.Tick,
 
     cache:                map[Cached_Query_Key][]Entity,
     cache_cmp_to_discard: map[typeid]struct{},
 
     // those fields can be used
+	userdata:    rawptr,
+    delta:       time.Duration,
+    delta_ms:    f32,
 	frame_arena: mem.Dynamic_Arena,
 	allocator:   runtime.Allocator,
-	userdata:    rawptr,
-	// TODO:
-	// prev_fram: time.Tick
-	//     delta_time: time.Duration
 }
 
 Entity :: struct {
@@ -72,10 +72,15 @@ register :: proc(w: ^World, system: System) {
 }
 
 update :: proc(w: ^World) {
-    // frame_start := time.tick_now()
-    // defer {
-    //     w.delta_time = time.tick_since(frame_start)
-    // }
+    if w.prev_frame != {} {
+        now := time.tick_now()
+        w.delta = time.tick_diff(w.prev_frame, now)
+        w.delta_ms = f32(time.duration_milliseconds(w.delta))
+        w.prev_frame = now
+        log("frame time:", w.delta)
+    } else {
+        w.prev_frame = time.tick_now()
+    }
 
 	for system in w.systems {
 		mem.dynamic_arena_reset(&w.frame_arena)
