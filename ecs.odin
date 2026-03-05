@@ -105,10 +105,8 @@ update :: proc(w: ^World) {
 
 create :: proc(w: ^World) -> Entity {
 	if len(w.freelist) > 0 {
-		entity := pop(&w.freelist) // this still has old generation
-		header := (^Block_Header)(&w.storage[entity.id * w.stride])
-
-		return header.entity
+		entity := pop(&w.freelist) // already has new generation
+		return entity
 	}
 
 	// resize if needed
@@ -130,12 +128,12 @@ create :: proc(w: ^World) -> Entity {
 
 kill :: proc(w: ^World, entity: Entity) {
     header := (^Block_Header)(&w.storage[entity.id * w.stride])
-    if entity.generation < header.entity.generation { // already killed
-        return
+    if entity.generation < header.entity.generation {
+        return // already killed
     }
 
-	append(&w.freelist, entity)
     header.entity.generation += 1
+	append(&w.freelist, header.entity)
 
     // discard cache
     for typ, offset in w.offsets {
