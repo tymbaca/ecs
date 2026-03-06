@@ -38,7 +38,7 @@ main :: proc() {
 
         if rl.IsKeyPressed(.UP) {
             draw_depth -= 1
-            draw_depth = max(draw_depth, -1)
+            draw_depth = max(draw_depth, -2)
         }
         if rl.IsKeyPressed(.DOWN) {
             draw_depth += 1
@@ -67,9 +67,11 @@ draw_node :: proc(node: ^bvh.Node(Circle, struct{}), color: rl.Color, draw := -1
         return
     }
 
-    if draw == -1 || draw == depth {
-        rl.DrawCircleLinesV(auto_cast node.volume.center, node.volume.radius, color)
-        rl.DrawText(rl.TextFormat("%i", depth), i32(node.volume.center.x), i32(node.volume.center.y), i32(node.volume.radius), rl.WHITE)
+    if draw != -2 {
+        if draw == -1 || draw == depth {
+            rl.DrawCircleLinesV(auto_cast node.volume.center, node.volume.radius, color)
+            rl.DrawText(rl.TextFormat("%i", depth), i32(node.volume.center.x), i32(node.volume.center.y), i32(node.volume.radius), rl.WHITE)
+        }
     }
 
     draw_node(node.left, color, draw = draw, depth = depth + 1)
