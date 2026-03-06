@@ -2,6 +2,7 @@ package bvh
 
 import "base:intrinsics"
 import "core:mem"
+
 Node :: struct($V, $B: typeid) {
 	left:   ^Node(V, B),
 	right:  ^Node(V, B),
@@ -48,7 +49,26 @@ insert :: proc(
     assert(this.left != nil)
     assert(this.right != nil)
 
-    if get_growth_proc(this.left.volume, new_volume) < get_growth_proc(this.right.volume, new_volume) {
+    left_worth := get_growth_proc(this.left.volume, new_volume)
+    right_worth := get_growth_proc(this.right.volume, new_volume)
+    this_worth := get_growth_proc(this.volume, new_volume)
+
+    if this_worth < left_worth && this_worth < right_worth {
+        tmp := new(Node(V, B), mem.dynamic_arena_allocator(arena))
+        tmp^ = this^
+        this.left = tmp
+
+		this.right = new(Node(V, B), mem.dynamic_arena_allocator(arena))
+		this.right^ = {
+			volume = new_volume,
+			body   = new_body,
+		}
+
+		this.volume = calculate_bounding_volume_proc(this.left.volume, this.right.volume)
+        return
+    }
+
+    if left_worth < right_worth {
         insert(this.left, new_volume, new_body, calculate_bounding_volume_proc, get_growth_proc, arena)
     } else {
         insert(this.right, new_volume, new_body, calculate_bounding_volume_proc, get_growth_proc, arena)

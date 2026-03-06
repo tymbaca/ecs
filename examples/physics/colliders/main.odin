@@ -6,8 +6,8 @@ import rl "vendor:raylib"
 import "core:math/rand"
 import "bvh"
 
-SCREEN_WIDTH :: 1920
-SCREEN_HEIGHT :: 1080
+SCREEN_WIDTH :: 1200
+SCREEN_HEIGHT :: 800
 
 Creating :: struct {}
 Ready :: struct {}
