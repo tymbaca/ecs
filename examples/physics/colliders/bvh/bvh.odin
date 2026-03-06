@@ -15,7 +15,7 @@ insert :: proc(
 	new_volume: V,
 	new_body: B,
 	calculate_bounding_volume_proc: proc(a, b: V) -> V,
-    get_growth_proc: proc(into, v: V) -> $N,
+	get_growth_proc: proc(into, v: V) -> $N,
 	arena: ^mem.Dynamic_Arena,
 ) where intrinsics.type_is_ordered(N) {
 	if this.body != nil {
@@ -36,27 +36,29 @@ insert :: proc(
 
 		this.body = nil
 		this.volume = calculate_bounding_volume_proc(this.left.volume, this.right.volume)
-        return
+		return
 	}
 
-    if this.left == nil && this.right == nil {
-        // lazy init
-        this.volume = new_volume
-        this.body = new_body
-        return
-    }
+	if this.left == nil && this.right == nil {
+		// lazy init
+		this.volume = new_volume
+		this.body = new_body
+		return
+	}
 
-    assert(this.left != nil)
-    assert(this.right != nil)
+	assert(this.left != nil)
+	assert(this.right != nil)
 
-    left_worth := get_growth_proc(this.left.volume, new_volume)
-    right_worth := get_growth_proc(this.right.volume, new_volume)
-    this_worth := get_growth_proc(this.volume, new_volume)
+	left_worth := get_growth_proc(this.left.volume, new_volume)
+	right_worth := get_growth_proc(this.right.volume, new_volume)
+	this_worth := get_growth_proc(this.volume, new_volume)
 
-    if this_worth < left_worth && this_worth < right_worth {
-        tmp := new(Node(V, B), mem.dynamic_arena_allocator(arena))
-        tmp^ = this^
-        this.left = tmp
+	if this_worth < left_worth &&
+	   this_worth < right_worth &&
+	   this_worth > get_growth_proc(this.left.volume, this.right.volume) {
+		tmp := new(Node(V, B), mem.dynamic_arena_allocator(arena))
+		tmp^ = this^
+		this.left = tmp
 
 		this.right = new(Node(V, B), mem.dynamic_arena_allocator(arena))
 		this.right^ = {
@@ -65,14 +67,28 @@ insert :: proc(
 		}
 
 		this.volume = calculate_bounding_volume_proc(this.left.volume, this.right.volume)
-        return
-    }
+		return
+	}
 
-    if left_worth < right_worth {
-        insert(this.left, new_volume, new_body, calculate_bounding_volume_proc, get_growth_proc, arena)
-    } else {
-        insert(this.right, new_volume, new_body, calculate_bounding_volume_proc, get_growth_proc, arena)
-    }
+	if left_worth < right_worth {
+		insert(
+			this.left,
+			new_volume,
+			new_body,
+			calculate_bounding_volume_proc,
+			get_growth_proc,
+			arena,
+		)
+	} else {
+		insert(
+			this.right,
+			new_volume,
+			new_body,
+			calculate_bounding_volume_proc,
+			get_growth_proc,
+			arena,
+		)
+	}
 
-    this.volume = calculate_bounding_volume_proc(this.left.volume, this.right.volume)
+	this.volume = calculate_bounding_volume_proc(this.left.volume, this.right.volume)
 }
