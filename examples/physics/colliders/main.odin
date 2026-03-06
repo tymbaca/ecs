@@ -6,8 +6,8 @@ import rl "vendor:raylib"
 import "core:math/rand"
 import "bvh"
 
-SCREEN_WIDTH :: 800
-SCREEN_HEIGHT :: 600
+SCREEN_WIDTH :: 1920
+SCREEN_HEIGHT :: 1080
 
 Creating :: struct {}
 Ready :: struct {}
@@ -25,6 +25,8 @@ main :: proc() {
 
     rl.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "window")
 
+    draw_depth := -1    
+
     for !rl.WindowShouldClose() {
         ecs.update(w)
 
@@ -34,8 +36,19 @@ main :: proc() {
             bvh.insert(&root, circle, struct{}{}, calculate_bounding_circle, get_circle_growth, &w.frame_arena)
         }
 
+        if rl.IsKeyPressed(.UP) {
+            draw_depth -= 1
+            draw_depth = max(draw_depth, -1)
+        }
+        if rl.IsKeyPressed(.DOWN) {
+            draw_depth += 1
+        }
+
         rl.BeginDrawing()
         rl.ClearBackground(rl.DARKGRAY)
+
+        rl.DrawRectangle(0, 0, SCREEN_WIDTH, 40, rl.BLACK);
+        rl.DrawText(rl.TextFormat("depth: %i", draw_depth), 10, 10, 20, rl.GREEN)
 
         for e in ecs.query(w, {Circle}) {
             circle := ecs.get(w, e, Circle)
@@ -43,22 +56,24 @@ main :: proc() {
             rl.DrawCircleV(auto_cast circle.center, circle.radius, color)
         }
 
-        draw_node(&root, rl.RED)
+        draw_node(&root, rl.RED, draw_depth)
 
         rl.EndDrawing()
     }
 }
 
-draw_node :: proc(node: ^bvh.Node(Circle, struct{}), color: rl.Color, depth := 0) {
+draw_node :: proc(node: ^bvh.Node(Circle, struct{}), color: rl.Color, draw := -1, depth := 0) {
     if node == nil {
         return
     }
 
-    rl.DrawCircleLinesV(auto_cast node.volume.center, node.volume.radius, color)
-    rl.DrawText(rl.TextFormat("%i", depth), i32(node.volume.center.x), i32(node.volume.center.y), i32(node.volume.radius), rl.WHITE)
+    if draw == -1 || draw == depth {
+        rl.DrawCircleLinesV(auto_cast node.volume.center, node.volume.radius, color)
+        rl.DrawText(rl.TextFormat("%i", depth), i32(node.volume.center.x), i32(node.volume.center.y), i32(node.volume.radius), rl.WHITE)
+    }
 
-    draw_node(node.left, color, depth + 1)
-    draw_node(node.right, color, depth + 1)
+    draw_node(node.left, color, draw = draw, depth = depth + 1)
+    draw_node(node.right, color, draw = draw, depth = depth + 1)
 }
 
 spawn_system :: proc(w: ^ecs.World) {
