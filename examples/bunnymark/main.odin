@@ -86,10 +86,8 @@ main :: proc() {
         rl.DrawText(rl.TextFormat("bunnies: %i", w.next_id), 120, 10, 20, rl.GREEN);
         rl.DrawText(fmt.caprintf("frame time: %s", w.delta_dur, allocator=mem.dynamic_arena_allocator(&w.frame_arena)), 320, 10, 20, rl.GREEN);
 
-
         rl.EndDrawing()
     }
-
 }
 
 apply_velocity :: proc(w: ^ecs.World) {
