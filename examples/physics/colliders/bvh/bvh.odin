@@ -7,6 +7,7 @@ Node :: struct($V, $B: typeid) {
 	left:   ^Node(V, B),
 	right:  ^Node(V, B),
 	volume: V,
+    is_set: bool,
 	body:   B,
 }
 
@@ -110,6 +111,13 @@ insert :: proc(
 	get_growth_proc: proc(into, v: V) -> $N,
 	arena: ^mem.Dynamic_Arena,
 ) where intrinsics.type_is_ordered(N) {
+	if !this.is_set {
+		this.volume = new_volume
+		this.body = new_body
+        this.is_set = true
+		return
+	}
+
 	if _is_leaf(this) {
 		assert(this.left == nil)
 		assert(this.right == nil)
@@ -118,23 +126,18 @@ insert :: proc(
 		this.left^ = {
 			volume = this.volume,
 			body   = this.body,
+            is_set = true,
 		}
 
 		this.right = new(Node(V, B), mem.dynamic_arena_allocator(arena))
 		this.right^ = {
 			volume = new_volume,
 			body   = new_body,
+            is_set = true,
 		}
 
 		this.body = {}
 		this.volume = calculate_bounding_volume_proc(this.left.volume, this.right.volume)
-		return
-	}
-
-	if this.left == nil && this.right == nil {
-		// lazy init
-		this.volume = new_volume
-		this.body = new_body
 		return
 	}
 
@@ -145,6 +148,7 @@ insert :: proc(
 	right_worth := get_growth_proc(this.right.volume, new_volume)
 	this_worth := get_growth_proc(this.volume, new_volume)
 
+    // if new volume is far away, we put it as our sibling, not in our children
 	if this_worth < left_worth &&
 	   this_worth < right_worth &&
 	   this_worth > get_growth_proc(this.left.volume, this.right.volume) {
@@ -156,6 +160,7 @@ insert :: proc(
 		this.right^ = {
 			volume = new_volume,
 			body   = new_body,
+            is_set = true,
 		}
 
 		this.volume = calculate_bounding_volume_proc(this.left.volume, this.right.volume)

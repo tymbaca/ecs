@@ -1,5 +1,7 @@
 package ecs
 
+import "core:log"
+import "core:fmt"
 import "core:time"
 import "base:intrinsics"
 import "base:runtime"
@@ -44,7 +46,7 @@ init :: proc(w: ^World, types: []typeid, allocator: runtime.Allocator) {
 	size := size_of(Block_Header)
 	for t in types {
 		w.offsets[t] = size
-		log("offset of", t, "is", size)
+		l("offset of", t, "is", size)
 
 		size += mem.align_forward_int(size_of(Component_Header), type_info_of(t).align)
 		size += type_info_of(t).size
@@ -77,7 +79,7 @@ update :: proc(w: ^World) {
         w.delta_dur = time.tick_diff(w.prev_frame, now)
         w.delta = f32(time.duration_milliseconds(w.delta_dur))
         w.prev_frame = now
-        log("frame time:", w.delta_dur)
+        l("frame time:", w.delta_dur)
     } else {
         w.prev_frame = time.tick_now()
     }
@@ -87,14 +89,14 @@ update :: proc(w: ^World) {
 
         system_start := time.tick_now()
 		system(w)
-        log("system: dur", time.tick_since(system_start))
+        l("system: dur", time.tick_since(system_start))
 
 		if len(w.cache_cmp_to_discard) > 0 {
             cache_inv_start := time.tick_now()
             loop: for type_set, cached_result in w.cache {
                 for cached_type in type_set {
                     if cached_type in w.cache_cmp_to_discard {
-                        log("cache invalidated for:", type_set)
+                        l("cache invalidated for:", type_set)
                         delete(cached_result, w.allocator)
                         delete_key(&w.cache, type_set)
                         
@@ -159,13 +161,13 @@ reserve :: proc(w: ^World, entity_count: int) {
 // query entities that have components from `types`. If `len(types) == 0`, then all entities will be returned.
 query :: proc(w: ^World, types: []typeid, loc := #caller_location) -> []Entity #no_bounds_check {
     start := time.tick_now()
-    defer log("query:", time.tick_since(start), types)
+    defer l("query:", time.tick_since(start), types)
 
     if len(types) > 0 && len(types) <= CACHED_QUERY_KEY_SIZE {
         key := to_cached_query_key(types)
         result, ok := w.cache[key]
         if ok {
-            log("query: found cached, len:", len(result))
+            l("query: found cached, len:", len(result))
             return result
         }
     }
@@ -180,7 +182,7 @@ query :: proc(w: ^World, types: []typeid, loc := #caller_location) -> []Entity #
         }
 
 		for t in types {
-            assert(t in w.offsets, "got unknown component type", loc)
+            log.assertf(t in w.offsets, "got unknown component type %s", t, loc=loc)
     
 			if !_has(w, entity.id, t) {
 				continue outter
@@ -206,7 +208,7 @@ query :: proc(w: ^World, types: []typeid, loc := #caller_location) -> []Entity #
 // TODO: compact
 
 get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid, loc := #caller_location) -> (T, bool) #optional_ok #no_bounds_check {
-    assert(T in w.offsets, "got unknown component type", loc)
+    log.assertf(T in w.offsets, "got unknown component type %s", typeid_of(T), loc=loc)
     offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
@@ -221,7 +223,7 @@ get :: #force_inline proc(w: ^World, entity: Entity, $T: typeid, loc := #caller_
 }
 
 set :: #force_inline proc(w: ^World, entity: Entity, component: $T, loc := #caller_location) -> bool #no_bounds_check {
-    assert(T in w.offsets, "got unknown component type", loc)
+    log.assertf(T in w.offsets, "got unknown component type %s", typeid_of(T), loc=loc)
     offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
@@ -242,7 +244,7 @@ set :: #force_inline proc(w: ^World, entity: Entity, component: $T, loc := #call
 }
 
 unset :: #force_inline proc(w: ^World, entity: Entity, $T: typeid, loc := #caller_location) -> bool #no_bounds_check {
-    assert(T in w.offsets, "got unknown component type", loc)
+    log.assertf(T in w.offsets, "got unknown component type %s", typeid_of(T), loc=loc)
     offset := w.offsets[T]
     
 	header := (^Block_Header)(&w.storage[entity.id * w.stride])
@@ -322,4 +324,13 @@ _has :: proc(w: ^World, entity_id: int, T: typeid) -> bool {
 @(private)
 _get_block_header_ptr :: proc(w: ^World, id: int) -> ^Block_Header {
 	return (^Block_Header)(&w.storage[id * w.stride])
+}
+
+DEBUG :: #config(ECS_DEBUG, false)
+
+@(private)
+l :: proc(args: ..any) {
+    when DEBUG {
+        fmt.println(..args)
+    }
 }

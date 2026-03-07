@@ -75,12 +75,6 @@ main :: proc() {
             }
         }
 
-        ecs.log("circles drawen:", drawed)
-        if drawed > 0 {
-            ecs.log("avg DrawCircleV time:", draw_circle_dur / auto_cast drawed)
-        }
-        ecs.log("render time:", time.tick_since(render_start))
-
         rl.DrawRectangle(0, 0, SCREEN_WIDTH, 40, rl.BLACK);
         rl.DrawFPS(10, 10)
         rl.DrawText(rl.TextFormat("bunnies: %i", w.next_id), 120, 10, 20, rl.GREEN);
