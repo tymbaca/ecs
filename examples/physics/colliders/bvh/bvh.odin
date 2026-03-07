@@ -10,6 +10,57 @@ Node :: struct($V, $B: typeid) {
 	body:   Maybe(B),
 }
 
+Collision :: struct($V, $B: typeid) {
+    a, b: ^Node(V, B)
+}
+
+check_collistions :: proc(
+    root: ^Node($V, $B), 
+    intersect_proc: proc(a, b: V) -> bool, 
+    arena: ^mem.Dynamic_Arena,
+) -> []Collision(V, B) {
+    return check_collistions_with(root, root, intersect_proc, arena)
+}
+
+check_collistions_with :: proc(
+    this, with: ^Node($V, $B), 
+    intersect_proc: proc(a, b: V) -> bool, 
+    arena: ^mem.Dynamic_Arena,
+) -> []Collision(V, B) {
+    acc := make([dynamic]Collision(V, B), allocator = mem.dynamic_arena_allocator(arena))
+    _check_collistions(this, with, intersect_proc, &acc)
+    return acc[:]
+}
+
+_check_collistions :: proc(
+    this, with: ^Node($V, $B), 
+    intersect_proc: proc(a, b: V) -> bool, 
+    acc: ^[dynamic]Collision(V, B),
+) {
+    if this == nil || with == nil {
+        return
+    }
+
+    if this.body == nil {
+        _check_collistions(this.left, with, intersect_proc, acc)
+        _check_collistions(this.right, with, intersect_proc, acc)
+        return
+    }
+
+    if !intersect_proc(this.volume, with.volume) {
+        return
+    }
+
+    if this != with && with.body != nil {
+        // with is a leaf
+        append(acc, Collision(V, B){this, with})
+        return
+    } 
+
+    _check_collistions(this, with.left, intersect_proc, acc)
+    _check_collistions(this, with.right, intersect_proc, acc)
+}
+
 insert :: proc(
 	this: ^Node($V, $B),
 	new_volume: V,

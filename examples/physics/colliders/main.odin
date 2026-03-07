@@ -1,5 +1,7 @@
 package colliders
 
+import "core:fmt"
+import "core:log"
 import "core:math/linalg"
 import ecs "../../.."
 import rl "vendor:raylib"
@@ -36,6 +38,8 @@ main :: proc() {
             bvh.insert(&root, circle, struct{}{}, calculate_bounding_circle, get_circle_growth, &w.frame_arena)
         }
 
+        collisions := bvh.check_collistions(&root, circles_intersect, &w.frame_arena)
+
         if rl.IsKeyPressed(.UP) {
             draw_depth -= 1
             draw_depth = max(draw_depth, -2)
@@ -49,6 +53,7 @@ main :: proc() {
 
         rl.DrawRectangle(0, 0, SCREEN_WIDTH, 40, rl.BLACK);
         rl.DrawText(rl.TextFormat("depth: %i", draw_depth), 10, 10, 20, rl.GREEN)
+        rl.DrawText(rl.TextFormat("collisions: %i", len(collisions)), 120, 10, 20, rl.GREEN)
 
         for e in ecs.query(w, {Circle}) {
             circle := ecs.get(w, e, Circle)

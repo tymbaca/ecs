@@ -33,3 +33,7 @@ calculate_bounding_circle_test :: proc(t: ^testing.T) {
 get_circle_growth :: proc(into, v: Circle) -> f32 {
     return calculate_bounding_circle(into, v).radius - into.radius
 }
+
+circles_intersect :: proc(a, b: Circle) -> bool {
+    return linalg.distance(a.center, b.center) < a.radius + b.radius
+}
