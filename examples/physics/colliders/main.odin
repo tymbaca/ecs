@@ -32,13 +32,14 @@ main :: proc() {
     for !rl.WindowShouldClose() {
         ecs.update(w)
 
+        circles := ecs.query(w, {Circle})
         root: bvh.Node(Circle, struct{})
-        for e in ecs.query(w, {Circle}) {
+        for e in circles {
             circle := ecs.get(w, e, Circle)
             bvh.insert(&root, circle, struct{}{}, calculate_bounding_circle, get_circle_growth, &w.frame_arena)
         }
 
-        collisions := bvh.check_collistions(&root, circles_intersect, &w.frame_arena)
+        collisions, total_checks := bvh.check_collistions(&root, circles_intersect, &w.frame_arena)
 
         if rl.IsKeyPressed(.UP) {
             draw_depth -= 1
@@ -54,8 +55,10 @@ main :: proc() {
         rl.DrawRectangle(0, 0, SCREEN_WIDTH, 40, rl.BLACK);
         rl.DrawText(rl.TextFormat("depth: %i", draw_depth), 10, 10, 20, rl.GREEN)
         rl.DrawText(rl.TextFormat("collisions: %i", len(collisions)), 120, 10, 20, rl.GREEN)
+        rl.DrawText(rl.TextFormat("checks: %i", total_checks), 320, 10, 20, rl.GREEN)
+        rl.DrawText(rl.TextFormat("count: %i", len(circles)), 470, 10, 20, rl.GREEN)
 
-        for e in ecs.query(w, {Circle}) {
+        for e in circles {
             circle := ecs.get(w, e, Circle)
             color := ecs.get(w, e, rl.Color)
             rl.DrawCircleV(auto_cast circle.center, circle.radius, color)

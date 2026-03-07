@@ -18,7 +18,7 @@ check_collistions :: proc(
     root: ^Node($V, $B), 
     intersect_proc: proc(a, b: V) -> bool, 
     arena: ^mem.Dynamic_Arena,
-) -> []Collision(V, B) {
+) -> (result: []Collision(V, B), total_checks: int) {
     return check_collistions_with(root, root, intersect_proc, arena)
 }
 
@@ -26,27 +26,29 @@ check_collistions_with :: proc(
     this, with: ^Node($V, $B), 
     intersect_proc: proc(a, b: V) -> bool, 
     arena: ^mem.Dynamic_Arena,
-) -> []Collision(V, B) {
+) -> (result: []Collision(V, B), total_checks: int) {
     acc := make([dynamic]Collision(V, B), allocator = mem.dynamic_arena_allocator(arena))
-    _check_collistions(this, with, intersect_proc, &acc)
-    return acc[:]
+    _check_collistions(this, with, intersect_proc, &acc, &total_checks)
+    return acc[:], total_checks
 }
 
 _check_collistions :: proc(
     this, with: ^Node($V, $B), 
     intersect_proc: proc(a, b: V) -> bool, 
     acc: ^[dynamic]Collision(V, B),
+    total_checks: ^int,
 ) {
     if this == nil || with == nil {
         return
     }
 
     if this.body == nil {
-        _check_collistions(this.left, with, intersect_proc, acc)
-        _check_collistions(this.right, with, intersect_proc, acc)
+        _check_collistions(this.left, with, intersect_proc, acc, total_checks)
+        _check_collistions(this.right, with, intersect_proc, acc, total_checks)
         return
     }
 
+    total_checks^ += 1
     if !intersect_proc(this.volume, with.volume) {
         return
     }
@@ -57,8 +59,8 @@ _check_collistions :: proc(
         return
     } 
 
-    _check_collistions(this, with.left, intersect_proc, acc)
-    _check_collistions(this, with.right, intersect_proc, acc)
+    _check_collistions(this, with.left, intersect_proc, acc, total_checks)
+    _check_collistions(this, with.right, intersect_proc, acc, total_checks)
 }
 
 insert :: proc(
