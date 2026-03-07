@@ -20,11 +20,12 @@ World :: struct {
     cache_cmp_to_discard: map[typeid]struct{},
 
     // those fields can be used
-	userdata:    rawptr,
-    delta:       f32,
-    delta_dur:   time.Duration,
-	frame_arena: mem.Dynamic_Arena,
-	allocator:   runtime.Allocator,
+	userdata:        rawptr,
+    delta:           f32,
+    delta_dur:       time.Duration,
+	frame_arena:     mem.Dynamic_Arena,
+    frame_allocator: mem.Allocator, // -> frame_arena
+	allocator:       runtime.Allocator,
 }
 
 Entity :: struct {
@@ -41,6 +42,7 @@ init :: proc(w: ^World, types: []typeid, allocator: runtime.Allocator) {
     w.cache = make(map[Cached_Query_Key][]Entity, allocator)
     w.cache_cmp_to_discard = make(map[typeid]struct{}, allocator)
 	mem.dynamic_arena_init(&w.frame_arena, allocator, allocator)
+    w.frame_allocator = mem.dynamic_arena_allocator(&w.frame_arena)
 	w.allocator = allocator
 
 	size := size_of(Block_Header)
