@@ -39,7 +39,7 @@ main :: proc() {
             bvh.insert(&root, circle, struct{}{}, calculate_bounding_circle, get_circle_growth, &w.frame_arena)
         }
 
-        collisions, total_checks := bvh.check_collistions(&root, circles_intersect, &w.frame_arena)
+        collisions, total_checks := bvh.check_collisions(&root, circles_intersect, &w.frame_arena)
 
         if rl.IsKeyPressed(.UP) {
             draw_depth -= 1
