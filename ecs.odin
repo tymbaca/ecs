@@ -76,6 +76,9 @@ register :: proc(w: ^World, system: System) {
 }
 
 update :: proc(w: ^World) {
+        context.allocator = w.allocator
+        context.temp_allocator = w.frame_allocator
+
         if w.prev_frame != {} {
                 now := time.tick_now()
                 w.delta_dur = time.tick_diff(w.prev_frame, now)
