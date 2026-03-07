@@ -82,7 +82,7 @@ update :: proc(w: ^World) {
         if w.prev_frame != {} {
                 now := time.tick_now()
                 w.delta_dur = time.tick_diff(w.prev_frame, now)
-                w.delta = f32(time.duration_milliseconds(w.delta_dur))
+                w.delta = f32(time.duration_seconds(w.delta_dur))
                 w.prev_frame = now
                 l("frame time:", w.delta_dur)
         } else {
