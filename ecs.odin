@@ -261,6 +261,11 @@ unset :: #force_inline proc(w: ^World, entity: Entity, $T: typeid, loc := #calle
 	return true
 }
 
+has :: #force_inline proc(w: ^World, entity: Entity, $T: typeid, loc := #caller_location) -> (bool) {
+    _, ok := get(w, entity, T, loc = loc)
+    return ok
+}
+
 @(private)
 CACHED_QUERY_KEY_SIZE :: 32
 @(private)

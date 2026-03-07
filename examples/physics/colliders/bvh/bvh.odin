@@ -7,7 +7,7 @@ Node :: struct($V, $B: typeid) {
 	left:   ^Node(V, B),
 	right:  ^Node(V, B),
 	volume: V,
-	body:   Maybe(B),
+	body:   B,
 }
 
 Collision :: struct($V, $B: typeid) {
@@ -44,13 +44,18 @@ _check_self :: proc(
     acc: ^[dynamic]Collision(V, B),
     total_checks: ^int,
 ) {
-    if node == nil || node.body != nil {
+    if node == nil || _is_leaf(node) {
         return
     }
     // internal node: check left vs left, right vs right, and left vs right
     _check_self(node.left,  intersect_proc, acc, total_checks)
     _check_self(node.right, intersect_proc, acc, total_checks)
     _check_between(node.left, node.right, intersect_proc, acc, total_checks)
+}
+
+@(private)
+_is_leaf :: proc(node: ^Node($V, $B)) -> bool {
+    return node.left == nil && node.right == nil
 }
 
 // _check_between – compare two *distinct* trees (or subtrees)
@@ -72,13 +77,13 @@ _check_between :: proc(
     }
 
     // both leaves → report collision
-    if a.body != nil && b.body != nil {
+    if _is_leaf(a) && _is_leaf(b) {
         append(acc, Collision(V, B){a, b})
         return
     }
 
     // at least one is internal
-    if a.body == nil && b.body == nil {
+    if !_is_leaf(a) && !_is_leaf(b) {
         // both internal: recurse into all four child combinations
         _check_between(a.left,  b.left,  intersect_proc, acc, total_checks)
         _check_between(a.left,  b.right, intersect_proc, acc, total_checks)
@@ -88,7 +93,7 @@ _check_between :: proc(
     }
 
     // one leaf, one internal
-    if a.body == nil { // a internal, b leaf
+    if !_is_leaf(a) { // a internal, b leaf
         _check_between(a.left,  b, intersect_proc, acc, total_checks)
         _check_between(a.right, b, intersect_proc, acc, total_checks)
     } else { // b internal
@@ -105,7 +110,7 @@ insert :: proc(
 	get_growth_proc: proc(into, v: V) -> $N,
 	arena: ^mem.Dynamic_Arena,
 ) where intrinsics.type_is_ordered(N) {
-	if this.body != nil {
+	if _is_leaf(this) {
 		assert(this.left == nil)
 		assert(this.right == nil)
 
@@ -121,7 +126,7 @@ insert :: proc(
 			body   = new_body,
 		}
 
-		this.body = nil
+		this.body = {}
 		this.volume = calculate_bounding_volume_proc(this.left.volume, this.right.volume)
 		return
 	}

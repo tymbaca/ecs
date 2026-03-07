@@ -37,3 +37,32 @@ get_circle_growth :: proc(into, v: Circle) -> f32 {
 circles_intersect :: proc(a, b: Circle) -> bool {
     return linalg.distance(a.center, b.center) < a.radius + b.radius
 }
+
+bounce :: proc(c1: Circle, v1: Velocity, c2: Circle, v2: Velocity) -> (new_v1: Velocity, new_v2: Velocity) {
+    // Normal vector from c1 to c2 (line of centers)
+    n := c2.center - c1.center
+    dist_sq := linalg.length2(n)
+    if dist_sq < 1e-6 { // nearly coincident – avoid division by zero
+        return v1, v2
+    }
+    n = linalg.normalize(n)
+
+    // Masses proportional to area (radius²)
+    m1 := c1.radius * c1.radius
+    m2 := c2.radius * c2.radius
+
+    // Decompose velocities into normal and tangential components
+    v1n := linalg.dot(v1, Velocity(n))
+    v2n := linalg.dot(v2, Velocity(n))
+    v1t := v1 - v1n * Velocity(n)
+    v2t := v2 - v2n * Velocity(n)
+
+    // New normal velocities after 1D elastic collision
+    v1n_new := ((m1 - m2) * v1n + 2 * m2 * v2n) / (m1 + m2)
+    v2n_new := ((m2 - m1) * v2n + 2 * m1 * v1n) / (m1 + m2)
+
+    // Combine with unchanged tangential components
+    new_v1 = v1n_new * Velocity(n) + v1t
+    new_v2 = v2n_new * Velocity(n) + v2t
+    return
+}
