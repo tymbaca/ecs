@@ -19,7 +19,7 @@ World :: struct {
         cache:                map[Cached_Query_Key][]Entity,
         cache_cmp_to_discard: map[typeid]struct{},
 
-    // those fields can be used
+        // those fields can be used
 	userdata:        rawptr,
         delta:           f32,
         delta_dur:       time.Duration,
@@ -89,9 +89,8 @@ update :: proc(w: ^World) {
                 w.prev_frame = time.tick_now()
         }
 
+        mem.dynamic_arena_reset(&w.frame_arena)
         for system in w.systems {
-                mem.dynamic_arena_reset(&w.frame_arena)
-
                 system_start := time.tick_now()
                 system(w)
                 l("system: dur", time.tick_since(system_start))
